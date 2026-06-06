@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InmuebleHoy Realty</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#2c3e50;--gr:#2ecc71;--grd:#27ae60;--gl:#eafaf1;--g50:#f8f9fa;--g100:#f1f3f4;--g200:#e8eaed;--g400:#9aa0a6;--g600:#5f6368;--txt:#2c3e50;--r:8px;--rl:12px;--sh:0 2px 12px rgba(0,0,0,.1);--shh:0 8px 32px rgba(0,0,0,.16)}
+body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt);background:#fff;line-height:1.5;overflow-x:hidden}
+/* NAV */
+nav{background:var(--dark);position:sticky;top:0;z-index:500;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.ni{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;height:64px;gap:16px}
+.logo{text-decoration:none;flex-shrink:0;display:flex;align-items:center}
+.nl{display:flex;align-items:center;gap:2px;flex:1}
+.nl a{color:rgba(255,255,255,.8);text-decoration:none;padding:7px 13px;border-radius:var(--r);font-size:14px;font-weight:500;transition:.2s;white-space:nowrap}
+.nl a:hover,.nl a.act{color:var(--gr)}
+.nr{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.bwh{color:#fff;border:1.5px solid rgba(255,255,255,.45);background:transparent;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap}
+.bwh:hover{border-color:#fff;background:rgba(255,255,255,.1)}
+.bgr{background:var(--gr);color:#fff;border:none;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.bgr:hover{background:var(--grd)}
+/* HERO */
+.hero{background:var(--dark);padding:56px 20px 72px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M20 20.5V18H0v5h20v-.5zm0-6V8H0v5h20v1.5zM20 9V4H0v5h20zm20 4v-5H20v5h20zm0 6v-5H20v5h20z'/%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
+.hero h1{color:#fff;font-size:clamp(26px,4vw,44px);font-weight:700;margin-bottom:10px;position:relative}
+.hero h1 span{color:var(--gr)}
+.hero>p{color:rgba(255,255,255,.7);font-size:16px;margin-bottom:28px;position:relative}
+.tabs{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+.tab{padding:8px 20px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;border:2px solid transparent;color:rgba(255,255,255,.65)}
+.tab:hover{color:#fff;background:rgba(255,255,255,.1)}
+.tab.on{background:var(--gr);color:#fff;border-color:var(--gr)}
+.sbox{background:#fff;border-radius:var(--rl);padding:5px 5px 5px 16px;display:flex;align-items:center;gap:8px;max-width:760px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.sbox select{border:none;outline:none;font-family:inherit;font-size:13px;color:var(--g600);background:transparent;cursor:pointer;padding:7px 4px;flex-shrink:0}
+.sdiv{width:1px;height:26px;background:var(--g200);flex-shrink:0}
+.sbox input{flex:1;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--txt);min-width:0;padding:4px 0}
+.sbox input::placeholder{color:var(--g400)}
+.bsr{background:var(--gr);color:#fff;border:none;padding:11px 22px;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.bsr:hover{background:var(--grd)}
+.pop{margin-top:14px}
+.pop span{color:rgba(255,255,255,.5);font-size:12px;margin-right:6px}
+.pop a{color:rgba(255,255,255,.82);font-size:12px;text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,.22);border-radius:50px;margin:2px;display:inline-block;transition:.2s}
+.pop a:hover{background:rgba(255,255,255,.1)}
+/* STATS */
+.sbar{background:var(--gr);padding:16px 20px}
+.si{max-width:1280px;margin:0 auto;display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+.stat{text-align:center;color:#fff}
+.sn{font-size:24px;font-weight:700;display:block}
+.sl{font-size:12px;opacity:.85}
+/* SECTIONS */
+section{padding:52px 20px}
+.si2{max-width:1280px;margin:0 auto}
+.sh{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:10px}
+.sh h2{font-size:clamp(18px,2.5vw,26px);font-weight:700}
+.sh h2 span{color:var(--gr)}
+.sh p{color:var(--g600);font-size:13px;margin-top:4px}
+.sa{color:var(--gr);text-decoration:none;font-size:13px;font-weight:600;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.sa:hover{color:var(--grd)}
+/* TYPE CARDS */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+.tcard{background:var(--g50);border:1.5px solid var(--g200);border-radius:var(--rl);padding:20px 14px;text-align:center;cursor:pointer;transition:.22s;text-decoration:none;display:block}
+.tcard:hover{border-color:var(--gr);background:#fff;transform:translateY(-3px);box-shadow:var(--sh)}
+.tcard svg{width:32px;height:32px;stroke:var(--gr);fill:none;margin:0 auto 10px;display:block}
+.tcard span{display:block;font-size:13px;font-weight:600}
+.tcard small{display:block;font-size:11px;color:var(--g400);margin-top:2px}
+/* PROP CARDS */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px}
+.pcard{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);overflow:hidden;transition:.22s;cursor:pointer}
+.pcard:hover{box-shadow:var(--shh);transform:translateY(-3px)}
+.pimg{position:relative;height:190px;background:var(--g200);overflow:hidden}
+.pimc{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;font-size:11px;color:var(--g400);position:relative}
+.pimc img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:block}
+.pimc svg{width:36px;height:36px;opacity:.3;stroke:#888;fill:none}
+.pbadge{position:absolute;top:10px;left:10px;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:50px;z-index:1}
+.pbadge.v{background:var(--gr)}.pbadge.r{background:var(--dark)}.pbadge.d{background:#e67e22}
+.pfav{position:absolute;top:8px;right:8px;background:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:.2s;z-index:2}
+.pfav:hover,.pfav.on{background:var(--gr)}
+.pfav.on svg,.pfav:hover svg{stroke:#fff;fill:#fff}
+.pfav svg{width:16px;height:16px;stroke:var(--g600);fill:none;transition:.2s}
+.pbody{padding:14px}
+.pp{font-size:18px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.pp span{font-size:12px;color:var(--g600);font-weight:400}
+.pt{font-size:13px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ploc{font-size:12px;color:var(--g600);display:flex;align-items:center;gap:3px;margin-bottom:10px}
+.ploc svg{width:13px;height:13px;stroke:var(--gr);fill:none;flex-shrink:0}
+.pfs{display:flex;gap:12px;padding-top:10px;border-top:1px solid var(--g100)}
+.pf{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--g600)}
+.pf svg{width:14px;height:14px;stroke:var(--g400);fill:none}
+.pf strong{color:var(--txt);font-size:13px}
+/* ZONES */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.zcard{position:relative;border-radius:var(--rl);overflow:hidden;height:130px;cursor:pointer;transition:.2s}
+.zcard:hover{transform:scale(1.02)}
+.zov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.05) 60%);display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+.zn{color:#fff;font-size:15px;font-weight:700}
+.zc{color:rgba(255,255,255,.75);font-size:11px;margin-top:1px}
+/* HOW */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;text-align:center}
+.snum{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--gr);color:#fff;border-radius:50%;font-size:12px;font-weight:700;margin-bottom:10px}
+.sico{width:60px;height:60px;background:var(--gl);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.sico svg{width:26px;height:26px;stroke:var(--gr);fill:none}
+.step h3{font-size:15px;font-weight:700;margin-bottom:6px}
+.step p{font-size:13px;color:var(--g600);line-height:1.6}
+/* AGENTS */
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}
+.acard{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);padding:20px;text-align:center;transition:.22s}
+.acard:hover{box-shadow:var(--sh);transform:translateY(-2px)}
+.aav{width:66px;height:66px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;overflow:hidden}
+.aav img{width:66px;height:66px;object-fit:cover}
+.aname{font-size:14px;font-weight:700;margin-bottom:3px}
+.azone{font-size:12px;color:var(--g600);margin-bottom:8px}
+.astats{display:flex;justify-content:center;gap:14px}
+.ast{font-size:11px;text-align:center;color:var(--g600)}
+.ast strong{display:block;font-size:14px;font-weight:700;color:var(--gr)}
+.bct{margin-top:12px;width:100%;padding:8px;border:1.5px solid var(--gr);border-radius:var(--r);background:transparent;color:var(--gr);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.bct:hover{background:var(--gr);color:#fff}
+/* BANNER */
+.pban{background:var(--dark);color:#fff;text-align:center;padding:52px 20px}
+.pban h2{font-size:clamp(20px,3vw,32px);font-weight:700;margin-bottom:10px}
+.pban h2 span{color:var(--gr)}
+.pban>p{color:rgba(255,255,255,.72);font-size:15px;margin-bottom:24px;max-width:520px;margin-left:auto;margin-right:auto}
+.bbtns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.bbg{background:var(--gr);color:#fff;border:none;padding:13px 28px;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s}
+.bbg:hover{background:var(--grd)}
+.bbo{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.45);padding:13px 28px;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.bbo:hover{border-color:#fff;background:rgba(255,255,255,.1)}
+/* BLOG */
+.bgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px}
+.bcard2{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);overflow:hidden;transition:.22s;cursor:pointer}
+.bcard2:hover{box-shadow:var(--sh);transform:translateY(-2px)}
+.bimg2{height:160px;background:var(--g100);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.btag2{position:absolute;top:10px;left:10px;background:var(--gr);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:50px;text-transform:uppercase;letter-spacing:.4px}
+.bimg2 svg{width:44px;height:44px;opacity:.2;stroke:#555;fill:none}
+.bbody2{padding:16px}
+.bdate2{font-size:11px;color:var(--g400);margin-bottom:6px}
+.btitle2{font-size:14px;font-weight:700;line-height:1.4;margin-bottom:6px}
+.bexc2{font-size:12px;color:var(--g600);line-height:1.6}
+/* FOOTER */
+footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
+.fi{max-width:1280px;margin:0 auto}
+.ftt{display:grid;grid-template-columns:260px 1fr;gap:56px;margin-bottom:44px}
+.fbb>p{font-size:13px;line-height:1.7;margin-top:14px;color:rgba(255,255,255,.55)}
+.fsoc{display:flex;gap:8px;margin-top:18px}
+.fsb{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:#fff;transition:.2s}
+.fsb:hover{background:var(--gr)}
+.fsb svg{width:16px;height:16px}
+.flinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:36px}
+.fc h4{color:#fff;font-size:12px;font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.7px}
+.fc a{display:block;color:rgba(255,255,255,.55);text-decoration:none;font-size:13px;margin-bottom:8px;transition:.2s}
+.fc a:hover{color:var(--gr)}
+.fbot{border-top:1px solid rgba(255,255,255,.1);padding:18px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.fbot p{font-size:12px}
+.fbotl{display:flex;gap:16px}
+.fbotl a{color:rgba(255,255,255,.45);text-decoration:none;font-size:12px;transition:.2s}
+.fbotl a:hover{color:var(--gr)}
+
+/* ═══ MODAL SYSTEM — sin bugs de nesting ═══ */
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;padding:16px}
+.moverlay.open{display:flex!important}
+.mbox{background:#fff;border-radius:16px;padding:32px;width:100%;position:relative;max-height:92vh;overflow-y:auto}
+.mbox.sm{max-width:420px}
+.mbox.md{max-width:580px}
+.mbox.lg{max-width:800px}
+.mclose{position:absolute;top:12px;right:14px;background:none;border:none;cursor:pointer;font-size:24px;color:var(--g400);line-height:1;padding:4px;z-index:1}
+.mclose:hover{color:var(--txt)}
+.minp{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:14px;outline:none;margin-bottom:11px;transition:.2s}
+.minp:focus{border-color:var(--gr)}
+.mlbl{display:block;font-size:12px;color:var(--g600);margin-bottom:5px;font-weight:500}
+.mbg{width:100%;padding:11px;background:var(--gr);color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;margin-bottom:9px}
+.mbg:hover{background:var(--grd)}
+.mbg:disabled{background:var(--g400);cursor:not-allowed}
+.mbo{width:100%;padding:10px;background:transparent;color:var(--txt);border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.mbo:hover{border-color:var(--gr);color:var(--gr)}
+.merr{color:#e74c3c;font-size:12px;margin-bottom:10px;padding:8px 12px;background:#fdf2f2;border-radius:var(--r)}
+.msuc{color:var(--grd);font-size:12px;margin-bottom:10px;padding:8px 12px;background:#eafaf1;border-radius:var(--r)}
+/* UPLOAD */
+.uarea{border:2px dashed var(--g200);border-radius:var(--rl);padding:24px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:12px}
+.uarea:hover,.uarea.drag{border-color:var(--gr);background:var(--gl)}
+.uarea svg{width:32px;height:32px;stroke:var(--g400);fill:none;margin:0 auto 8px;display:block}
+.uarea p{font-size:13px;color:var(--g600)}
+.uarea span{font-size:11px;color:var(--g400)}
+.upv{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.upvi{position:relative;width:80px;height:60px;border-radius:6px;overflow:hidden}
+.upvi img{width:100%;height:100%;object-fit:cover}
+.upvi button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+/* ADMIN */
+.admp{display:none;position:fixed;inset:0;background:#f0f2f5;z-index:8000;overflow-y:auto}
+.admp.open{display:block}
+.adnav{background:var(--dark);padding:0 24px;display:flex;align-items:center;height:60px;gap:16px}
+.adnav h3{color:#fff;font-size:16px;font-weight:700}
+.adnav span{color:rgba(255,255,255,.5);font-size:13px}
+.adbody{max-width:1100px;margin:0 auto;padding:28px 20px}
+.adtabs{display:flex;gap:4px;margin-bottom:24px;background:#fff;border-radius:var(--rl);padding:4px;border:1px solid var(--g200);overflow-x:auto}
+.atab{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;color:var(--g600);border:none;background:transparent;font-family:inherit;white-space:nowrap}
+.atab.on{background:var(--gr);color:#fff}
+.asec{display:none}
+.asec.on{display:block}
+.card{background:#fff;border-radius:var(--rl);padding:20px;border:1px solid var(--g200);margin-bottom:16px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:16px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--g600);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:.2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gr)}
+.fg textarea{resize:vertical;min-height:80px}
+.bsv{background:var(--gr);color:#fff;border:none;padding:10px 24px;border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.bsv:hover{background:var(--grd)}
+.bsv:disabled{background:var(--g400);cursor:not-allowed}
+.bdel{background:#e74c3c;color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.bdel:hover{background:#c0392b}
+.bedi{background:var(--dark);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 12px;background:var(--g50);color:var(--g600);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--g200)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--g100);vertical-align:middle}
+.tbl tr:hover td{background:var(--g50)}
+.bdg{display:inline-block;padding:2px 8px;border-radius:50px;font-size:11px;font-weight:600}
+.bdg.v{background:#eafaf1;color:#27ae60}
+.bdg.r{background:#eaf0fb;color:#2980b9}
+.bdg.d{background:#fef5e7;color:#e67e22}
+.pbar{width:100%;height:4px;background:var(--g200);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.pfill{height:100%;background:var(--gr);transition:.3s;width:0}
+/* PROP DETAIL MODAL */
+.pdimgs{margin-bottom:16px}
+.photo-collage{display:grid;gap:4px;border-radius:var(--rl);overflow:hidden}
+.photo-collage img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;transition:.2s}
+.photo-collage img:hover{opacity:.9}
+/* Lightbox */
+.lbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99999;align-items:center;justify-content:center}
+.lbox.open{display:flex}
+.lbox img{max-width:92vw;max-height:90vh;object-fit:contain;border-radius:8px}
+.lbox-close{position:fixed;top:16px;right:20px;color:#fff;font-size:32px;cursor:pointer;background:none;border:none;line-height:1;z-index:1}
+.lbox-prev,.lbox-next{position:fixed;top:50%;transform:translateY(-50%);color:#fff;font-size:36px;cursor:pointer;background:rgba(255,255,255,.12);border:none;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;z-index:1}
+.lbox-prev{left:12px}.lbox-next{right:12px}
+.lbox-counter{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:13px}
+.pdgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.pdgrid label{font-size:11px;color:var(--g600);font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:2px}
+.pdgrid p{font-size:14px;font-weight:600}
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:var(--rl);font-size:13px;z-index:99999;transform:translateY(80px);opacity:0;transition:.3s;max-width:320px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:#27ae60}
+.toast.err{background:#e74c3c}
+/* SPINNER */
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--g200);border-top-color:var(--gr);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes prgrs{from{width:0}to{width:100%}}
+/* MOBILE */
+@media(max-width:768px){
+  .nl{display:none}
+  .ftt{grid-template-columns:1fr}
+  .sbox{flex-wrap:wrap;padding:10px;gap:6px}
+  .sbox select,.sdiv{display:none}
+  .bsr{width:100%;justify-content:center}
+  .r2,.r3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="ni">
+    <a href="#" class="logo" onclick="return false">
+      <svg height="36" viewBox="0 0 148 36" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="10" width="11" height="24" rx="1.5" fill="white"/>
+        <rect x="16" y="4" width="11" height="30" rx="1.5" fill="white"/>
+        <rect x="30" y="14" width="6" height="10" rx="1" fill="#2ecc71"/>
+        <rect x="30" y="26" width="6" height="8" rx="1" fill="#2ecc71"/>
+        <rect x="8.5" y="24" width="2" height="4" rx=".5" fill="#2c3e50" opacity=".5"/>
+        <text x="41" y="19" fill="#2ecc71" font-family="'Plus Jakarta Sans',sans-serif" font-size="7" font-weight="700" letter-spacing="2.5">REALTY</text>
+        <text x="41" y="31" fill="white" font-family="'Plus Jakarta Sans',sans-serif" font-size="11" font-weight="700">Inmuebles<tspan fill="#2ecc71">Hoy</tspan></text>
+      </svg>
+    </a>
+    <div class="nl">
+      <a href="#" onclick="return false" class="act">Inicio</a>
+      <a href="#comprar" onclick="goTo('comprar');return false">Comprar</a>
+      <a href="#rentar" onclick="goTo('rentar');return false">Rentar</a>
+      <a href="#agentes" onclick="goTo('agentes');return false">Agentes</a>
+    </div>
+    <div class="nr">
+      <button class="bwh" id="nav-login-btn" onclick="OM('mlogin')">Iniciar sesión</button>
+      <button class="bgr" onclick="OM('mpublish')">Publicar inmueble</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <h1>Encuentra tu propiedad ideal<br><span>en Zacatecas</span></h1>
+  <p>Las mejores propiedades en Zacatecas y Guadalupe</p>
+  <div class="tabs">
+    <div class="tab on" onclick="setTab(this,'comprar')">Comprar</div>
+    <div class="tab" onclick="setTab(this,'rentar')">Rentar</div>
+    <div class="tab" onclick="setTab(this,'desarrollos')">Desarrollos nuevos</div>
+  </div>
+  <div class="sbox">
+    <select id="ssel">
+      <option value="Casa">Casa</option>
+      <option value="Departamento">Departamento</option>
+      <option value="Terreno">Terreno</option>
+      <option value="Oficina">Oficina</option>
+      <option value="Local comercial">Local comercial</option>
+      <option value="Bodega">Bodega</option>
+    </select>
+    <div class="sdiv"></div>
+    <input type="text" id="sinput" placeholder="Ciudad, estado, colonia o desarrollo…" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="bsr" onclick="doSearch()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Buscar
+    </button>
+  </div>
+  <div class="pop">
+    <span>Zonas:</span>
+    <a href="#" onclick="qs('Zacatecas');return false">Zacatecas</a>
+    <a href="#" onclick="qs('Guadalupe');return false">Guadalupe</a>
+  </div>
+</section>
+
+
+<!-- TIPOS -->
+<section id="tipos">
+  <div class="si2">
+    <div class="sh"><div><h2>Busca por <span>tipo de inmueble</span></h2><p>Encuentra exactamente lo que necesitas</p></div></div>
+    <div class="tgrid">
+      <a href="#" class="tcard" onclick="filterType('Casa');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Casas</span><small>+180,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Departamento');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 3v18M16 3v18M2 9h20M2 15h20"/></svg><span>Departamentos</span><small>+140,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Terreno');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 20h18M3 20l4-8 4 4 3-6 4 10"/></svg><span>Terrenos</span><small>+60,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Oficina');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg><span>Oficinas</span><small>+30,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Local comercial');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M2 7l1-4h18l1 4M2 7v13a1 1 0 001 1h18a1 1 0 001-1V7M10 11v5M14 11v5"/></svg><span>Locales</span><small>+25,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Bodega');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Bodegas</span><small>+18,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Desarrollo');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="2" width="9" height="9"/><rect x="13" y="2" width="9" height="9"/><rect x="2" y="13" width="9" height="9"/><rect x="13" y="13" width="9" height="9"/></svg><span>Desarrollos</span><small>+8,000</small></a>
+      <a href="#" class="tcard" onclick="filterType('Quinta');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg><span>Quintas</span><small>+12,000</small></a>
+    </div>
+  </div>
+</section>
+
+<!-- VENTA -->
+<section id="comprar" style="background:var(--g50)">
+  <div class="si2">
+    <div class="sh"><div><h2>Propiedades en <span>venta</span></h2><p>Las mejores opciones disponibles hoy</p></div><a href="#" class="sa" onclick="OSM('Comprar');return false">Ver todas ›</a></div>
+    <div class="pgrid" id="venta-grid"><div class="spin"></div></div>
+  </div>
+</section>
+
+<!-- RENTA -->
+<section id="rentar">
+  <div class="si2">
+    <div class="sh"><div><h2>Propiedades en <span>renta</span></h2><p>Encuentra el hogar perfecto para arrendar</p></div><a href="#" class="sa" onclick="OSM('Rentar');return false">Ver todas ›</a></div>
+    <div class="pgrid" id="renta-grid"><div class="spin"></div></div>
+  </div>
+</section>
+
+
+<!-- CÓMO FUNCIONA -->
+<section>
+  <div class="si2">
+    <div class="sh" style="justify-content:center;text-align:center"><div style="width:100%"><h2>¿Cómo <span>funciona</span>?</h2><p>Encontrar o publicar tu propiedad nunca fue tan fácil</p></div></div>
+    <div class="steps">
+      <div class="step"><div class="snum">1</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>Busca tu propiedad</h3><p>Usa filtros avanzados para encontrar la opción ideal.</p></div>
+      <div class="step"><div class="snum">2</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><h3>Compara opciones</h3><p>Revisa fotos, características y precios.</p></div>
+      <div class="step"><div class="snum">3</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.63A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6z"/></svg></div><h3>Contacta al agente</h3><p>Comunícate para agendar una visita.</p></div>
+      <div class="step"><div class="snum">4</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h3>Cierra el trato</h3><p>Con apoyo de asesores certificados.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- AGENTES -->
+<section id="agentes">
+  <div class="si2">
+    <div class="sh"><div><h2>Agentes <span>destacados</span></h2><p>Profesionales certificados listos para ayudarte</p></div></div>
+    <div class="agrid" id="agents-grid"><div class="spin"></div></div>
+  </div>
+</section>
+
+<!-- BANNER -->
+<div class="pban">
+  <h2>¿Quieres vender o rentar<br><span>tu propiedad?</span></h2>
+  <p>Publica gratis y llega a más de 1.6 millones de compradores potenciales.</p>
+  <div class="bbtns">
+    <button class="bbg" onclick="OM('mpublish')">Publicar propiedad gratis</button>
+    <button class="bbo" onclick="OM('minfo')">Saber más</button>
+  </div>
+</div>
+
+
+<!-- FOOTER -->
+<footer><div class="fi">
+  <div class="ftt">
+    <div class="fbb">
+      <svg height="38" viewBox="0 0 148 36" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="10" width="11" height="24" rx="1.5" fill="white"/>
+        <rect x="16" y="4" width="11" height="30" rx="1.5" fill="white"/>
+        <rect x="30" y="14" width="6" height="10" rx="1" fill="#2ecc71"/>
+        <rect x="30" y="26" width="6" height="8" rx="1" fill="#2ecc71"/>
+        <text x="41" y="19" fill="#2ecc71" font-family="'Plus Jakarta Sans',sans-serif" font-size="7" font-weight="700" letter-spacing="2.5">REALTY</text>
+        <text x="41" y="31" fill="white" font-family="'Plus Jakarta Sans',sans-serif" font-size="11" font-weight="700">Inmuebles<tspan fill="#2ecc71">Hoy</tspan></text>
+      </svg>
+      <p>Portal inmobiliario líder en México. Conectamos compradores, vendedores y arrendatarios.</p>
+      <div class="fsoc">
+        <button class="fsb"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></button>
+        <button class="fsb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor"/></svg></button>
+        <button class="fsb"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></button>
+      </div>
+    </div>
+    <div class="flinks">
+      <div class="fc"><h4>Inmuebles</h4><a href="#" onclick="return false">Casas en venta</a><a href="#" onclick="return false">Departamentos</a><a href="#" onclick="return false">Casas en renta</a><a href="#" onclick="return false">Terrenos</a><a href="#" onclick="return false">Nuevos desarrollos</a></div>
+      <div class="fc"><h4>Ciudades</h4><a href="#" onclick="qs('Zacatecas');return false">Zacatecas</a><a href="#" onclick="qs('Guadalupe');return false">Guadalupe</a></div>
+      <div class="fc"><h4>Publicar</h4><a href="#" onclick="OM('mpublish');return false">Publicar propiedad</a><a href="#" onclick="OM('mpublish');return false">Planes para agentes</a><a href="#" onclick="OM('minfo');return false">Desarrolladores</a></div>
+      <div class="fc"><h4>Empresa</h4><a href="#" onclick="OM('minfo');return false">Quiénes somos</a><a href="#" onclick="goTo('blog');return false">Blog inmobiliario</a><a href="#" onclick="OM('mcontact');return false">Contacto</a></div>
+    </div>
+  </div>
+  <div class="fbot"><p>© 2025 InmuebleHoy Realty. Todos los derechos reservados.</p><div class="fbotl"><a href="#" onclick="return false">Privacidad</a><a href="#" onclick="return false">Términos</a><a href="#" onclick="return false">Cookies</a></div></div>
+</div></footer>
+
+<!-- ═══ ADMIN PANEL ═══ -->
+<div id="admp" class="admp">
+  <div class="adnav">
+    <h3>Panel de Administración — InmuebleHoy</h3>
+    <span id="adm-email"></span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="bwh" onclick="closeAdmin()">← Ver sitio</button>
+      <button class="bwh" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+  <div class="adbody">
+    <div class="adtabs">
+      <button id="tab-props" class="atab on" onclick="showAT('at-props',this)">🏠 Mis Propiedades</button>
+      <button id="tab-agents" class="atab" onclick="showAT('at-agents',this)">👥 Agentes</button>
+      <button id="tab-addprop" class="atab" onclick="showAT('at-addprop',this)">➕ Publicar propiedad</button>
+      <button id="tab-addagent" class="atab" onclick="showAT('at-addagent',this)">➕ Crear agente</button>
+    </div>
+
+    <!-- LISTA PROPIEDADES -->
+    <div id="at-props" class="asec on">
+      <div class="card"><h3>Propiedades publicadas</h3><div id="adm-props-list"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- LISTA AGENTES -->
+    <div id="at-agents" class="asec">
+      <div class="card"><h3>Agentes registrados</h3><div id="adm-agents-list"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- FORM PUBLICAR PROPIEDAD -->
+    <div id="at-addprop" class="asec">
+      <div class="card">
+        <h3 id="prop-form-title">Publicar nueva propiedad</h3>
+        <div id="prop-form-msg"></div>
+        <div class="r2">
+          <div class="fg"><label>Título *</label><input type="text" id="pf-title" placeholder="Ej: Casa en Lomas de Chapultepec"></div>
+          <div class="fg"><label>Precio * (solo número)</label><input type="number" id="pf-price-raw" min="0" placeholder="Ej: 8500000" oninput="updatePriceDisplay(this.value)"><small id="pf-price-preview" style="color:var(--gr);font-weight:700;font-size:13px;display:block;margin-top:4px">$0 MXN</small><input type="hidden" id="pf-price"></div>
+        </div>
+        <div class="r3">
+          <div class="fg"><label>Tipo</label><select id="pf-type"><option value="venta">En venta</option><option value="renta">En renta</option><option value="desarrollo">Desarrollo/Preventa</option></select></div>
+          <div class="fg"><label>Categoría</label><select id="pf-cat"><option>Casa</option><option>Departamento</option><option>Terreno</option><option>Oficina</option><option>Local comercial</option><option>Bodega</option><option>Desarrollo</option><option>Quinta</option></select></div>
+          <div class="fg"><label>Moneda</label><select id="pf-cur"><option value="MXN">MXN</option><option value="USD">USD</option><option value="MXN/mes">MXN/mes (renta)</option><option value="USD/mes">USD/mes (renta)</option></select></div>
+        </div>
+        <div class="r3">
+          <div class="fg"><label>Recámaras</label><input type="number" id="pf-beds" min="0" value="3"></div>
+          <div class="fg"><label>Baños</label><input type="number" id="pf-baths" min="0" value="2"></div>
+          <div class="fg"><label>Estacionamientos</label><input type="number" id="pf-parking" min="0" value="1"></div>
+        </div>
+        <div class="r2">
+          <div class="fg"><label>m² Construcción</label><input type="number" id="pf-sqm" min="0" value="120" placeholder="Ej: 120"></div>
+          <div class="fg"><label>m² Terreno</label><input type="number" id="pf-sqm-land" min="0" value="0" placeholder="Ej: 300 (0 si no aplica)"></div>
+        </div>
+        <div class="r2">
+          <div class="fg"><label>Ciudad *</label><select id="pf-city"><option value="Zacatecas, Zac.">Zacatecas</option><option value="Guadalupe, Zac.">Guadalupe</option></select></div>
+          <div class="fg"><label>Colonia / Zona</label><input type="text" id="pf-zone" placeholder="Ej: Fraccionamiento Las Américas"></div>
+        </div>
+        <div class="fg">
+          <label>Dirección exacta <span style="color:var(--g400);font-weight:400">(para el mapa)</span></label>
+          <input type="text" id="pf-address" placeholder="Ej: Calle Rosales 45, Fracc. Las Américas, Guadalupe, Zac." style="width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:.2s" onfocus="this.style.borderColor='var(--gr)'" onblur="this.style.borderColor='var(--g200)'">
+          <small style="color:var(--g400);font-size:11px;margin-top:3px;display:block">📍 Entre más detallada, más preciso el mapa</small>
+        </div>
+        <div class="fg"><label>Descripción</label><textarea id="pf-desc" placeholder="Descripción detallada de la propiedad…"></textarea></div>
+
+        <!-- FOTOS -->
+        <div class="fg">
+          <label>Fotos (se suben gratis a Cloudinary)</label>
+          <div class="uarea" id="drop-area" onclick="document.getElementById('file-inp').click()" ondragover="doDragOver(event)" ondrop="doDrop(event)" ondragleave="document.getElementById('drop-area').classList.remove('drag')">
+            <svg viewBox="0 0 24 24" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <p>Arrastra fotos aquí o <strong style="color:var(--gr)">haz clic para seleccionar</strong></p>
+            <span>JPG, PNG, WEBP · Máx 5MB c/u · Gratis</span>
+          </div>
+          <input type="file" id="file-inp" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+          <div class="pbar" id="upload-pbar" style="display:none"><div class="pfill" id="upload-pfill"></div></div>
+          <div class="upv" id="photo-prevs"></div>
+        </div>
+
+        <div class="fg"><label>Agente responsable</label><select id="pf-agent"><option value="">— Sin asignar —</option></select></div>
+        <button class="bsv" id="btn-saveprop" onclick="saveProp()">💾 Publicar propiedad</button>
+        &nbsp;&nbsp;<button class="bsv" style="background:var(--g400)" id="btn-canceledit" onclick="cancelEdit()" style="display:none">Cancelar edición</button>
+      </div>
+    </div>
+
+    <!-- FORM CREAR AGENTE -->
+    <div id="at-addagent" class="asec">
+      <div class="card">
+        <h3>Crear nuevo agente</h3>
+        <p style="font-size:13px;color:var(--g600);margin-bottom:16px">El agente podrá iniciar sesión con su correo y contraseña para gestionar propiedades.</p>
+        <div id="agent-form-msg"></div>
+        <div class="r2">
+          <div class="fg"><label>Nombre completo *</label><input type="text" id="af-name" placeholder="Ej: Carlos Mendoza"></div>
+          <div class="fg"><label>Zona / Ciudad</label><input type="text" id="af-zone" placeholder="Ej: CDMX · Polanco"></div>
+        </div>
+        <div class="r2">
+          <div class="fg"><label>Correo electrónico *</label><input type="email" id="af-email" placeholder="agente@inmuebleshoy.com"></div>
+          <div class="fg"><label>Contraseña temporal * (mín. 6)</label><input type="password" id="af-pass" placeholder="Contraseña para el agente"></div>
+        </div>
+        <div class="r2">
+          <div class="fg"><label>Teléfono / WhatsApp</label><input type="tel" id="af-phone" placeholder="+52 492 000 0000"></div>
+          <div class="fg"><label>Propiedades activas</label><input type="number" id="af-props" min="0" value="0"></div>
+        </div>
+        <div class="fg">
+          <label>Foto del agente (opcional)</label>
+          <div class="uarea" onclick="document.getElementById('agent-photo-inp').click()" style="padding:16px">
+            <p style="font-size:12px">Clic para subir foto del agente</p>
+          </div>
+          <input type="file" id="agent-photo-inp" accept="image/*" style="display:none" onchange="handleAgentPhoto(this.files)">
+          <div id="agent-photo-prev"></div>
+        </div>
+        <button class="bsv" id="btn-saveagent" onclick="saveAgent()">👤 Crear agente</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODALES ═══ -->
+
+<!-- LOGIN -->
+<div id="mlogin" class="moverlay" onclick="overlayClick(event,'mlogin')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('mlogin')">×</button>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Iniciar sesión</h2>
+    <p style="font-size:13px;color:var(--g600);margin-bottom:18px">Bienvenido a InmuebleHoy</p>
+    <div id="l-err" class="merr" style="display:none"></div>
+    <label class="mlbl">Correo electrónico</label>
+    <input class="minp" type="email" id="l-email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')doLogin()">
+    <label class="mlbl">Contraseña</label>
+    <input class="minp" type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div style="text-align:right;margin-bottom:14px">
+      <a href="#" onclick="OM('mreset');return false" style="font-size:12px;color:var(--gr)">¿Olvidaste tu contraseña?</a>
+    </div>
+    <button class="mbg" id="l-btn" onclick="doLogin()">Entrar</button>
+    <p style="text-align:center;font-size:12px;color:var(--g600)">¿No tienes cuenta? <a href="#" onclick="OM('mpublish');return false" style="color:var(--gr);font-weight:600">Registrarme como agente</a></p>
+  </div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div id="mreset" class="moverlay" onclick="overlayClick(event,'mreset')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('mreset')">×</button>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Recuperar contraseña</h2>
+    <p style="font-size:13px;color:var(--g600);margin-bottom:18px">Te enviaremos un enlace de recuperación</p>
+    <div id="r-msg" style="display:none"></div>
+    <label class="mlbl">Correo electrónico</label>
+    <input class="minp" type="email" id="r-email" placeholder="tu@correo.com">
+    <button class="mbg" onclick="doReset()">Enviar enlace</button>
+    <button class="mbo" onclick="OM('mlogin')">← Volver al login</button>
+  </div>
+</div>
+
+<!-- PUBLICAR -->
+<div id="mpublish" class="moverlay" onclick="overlayClick(event,'mpublish')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('mpublish')">×</button>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Publicar propiedad</h2>
+    <p style="font-size:13px;color:var(--g600);margin-bottom:18px">Llega a millones de compradores en México</p>
+    <button class="mbg" onclick="OM('mlogin')">Soy agente — Iniciar sesión</button>
+    <button class="mbo" onclick="OM('mlogin')">Crear cuenta de agente</button>
+  </div>
+</div>
+
+<!-- BUSCAR -->
+<div id="msearch" class="moverlay" onclick="overlayClick(event,'msearch')">
+  <div class="mbox lg">
+    <button class="mclose" onclick="CM('msearch')">×</button>
+    <h2 id="ms-title" style="font-size:18px;font-weight:700;margin-bottom:4px">Resultados</h2>
+    <p id="ms-sub" style="font-size:13px;color:var(--g600);margin-bottom:18px"></p>
+    <div class="pgrid" id="ms-results" style="gap:14px"></div>
+  </div>
+</div>
+
+<!-- DETALLE PROPIEDAD -->
+<div id="mprop" class="moverlay" onclick="overlayClick(event,'mprop')">
+  <div class="mbox lg">
+    <button class="mclose" onclick="CM('mprop')">×</button>
+    <div id="mprop-c"></div>
+  </div>
+</div>
+
+<!-- CONTACTAR AGENTE -->
+<div id="magent" class="moverlay" onclick="overlayClick(event,'magent')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('magent')">×</button>
+    <h2 id="ag-title" style="font-size:18px;font-weight:700;margin-bottom:4px">Contactar agente</h2>
+    <p id="ag-subtitle" style="font-size:13px;color:var(--g600);margin-bottom:14px">Envía tu mensaje directamente por WhatsApp</p>
+    <div id="ag-ok" class="msuc" style="display:none"></div>
+    <label class="mlbl">Tu nombre</label>
+    <input class="minp" type="text" id="c-name" placeholder="Nombre completo">
+    <label class="mlbl">Tu teléfono o correo</label>
+    <input class="minp" type="text" id="c-tel" placeholder="+52 55 0000 0000">
+    <label class="mlbl">Mensaje</label>
+    <textarea class="minp" id="c-msg" rows="3" placeholder="Hola, me interesa esta propiedad…" style="resize:vertical"></textarea>
+    <!-- WhatsApp button (primary) -->
+    <button class="mbg" id="ag-wa-btn" onclick="sendContactWhatsApp()" style="background:#25D366;display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      Enviar por WhatsApp
+    </button>
+    <button class="mbo" onclick="sendContact()" style="margin-top:6px">Solo registrar mensaje</button>
+    <p style="font-size:11px;color:var(--g400);text-align:center;margin-top:8px" id="ag-wa-note">Se abrirá WhatsApp con tu mensaje listo para enviar</p>
+  </div>
+</div>
+
+<!-- INFO -->
+<div id="minfo" class="moverlay" onclick="overlayClick(event,'minfo')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('minfo')">×</button>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:10px">InmuebleHoy Realty</h2>
+    <p style="font-size:13px;color:var(--g600);line-height:1.7">Portal inmobiliario con más de 500,000 propiedades en más de 320 ciudades de México. Conectamos a compradores, vendedores y arrendatarios de forma segura y eficiente.</p>
+    <button class="mbg" style="margin-top:18px" onclick="CM('minfo')">Entendido</button>
+  </div>
+</div>
+
+<!-- CONTACTO -->
+<div id="mcontact" class="moverlay" onclick="overlayClick(event,'mcontact')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('mcontact')">×</button>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:14px">Contacto</h2>
+    <div id="co-ok" class="msuc" style="display:none"></div>
+    <label class="mlbl">Nombre</label>
+    <input class="minp" type="text" id="co-n" placeholder="Tu nombre">
+    <label class="mlbl">Correo</label>
+    <input class="minp" type="email" id="co-e" placeholder="tu@correo.com">
+    <label class="mlbl">Mensaje</label>
+    <textarea class="minp" id="co-m" rows="3" style="resize:vertical" placeholder="¿En qué podemos ayudarte?"></textarea>
+    <button class="mbg" onclick="sendCoForm()">Enviar</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIGURACIÓN
+//  ► Paso 1: Crea proyecto GRATIS en https://console.firebase.google.com
+//  ► Paso 2: Activa Authentication → Email/Password
+//  ► Paso 3: Activa Realtime Database
+//  ► Paso 4: Pega aquí tus credenciales
+//  ► Paso 5: Para fotos, crea cuenta gratis en https://cloudinary.com
+//            Ve a Settings → Upload → Upload Presets → Añadir preset sin firmar
+// ════════════════════════════════════════════════════════
+// ► REGLAS FIREBASE que debes pegar en Realtime Database → Reglas:
+// {
+//   "rules": {
+//     ".read": true,
+//     "properties": { ".write": "auth != null" },
+//     "agents":     { ".write": "auth != null" },
+//     "admins":     { ".write": "auth != null" }
+//   }
+// }
+// ► Después de crear tu cuenta de admin, ejecuta esto en la consola del navegador
+//   (una sola vez) para marcarte como admin:
+//   firebase.database().ref('admins/' + firebase.auth().currentUser.uid).set(true)
+const FB_CFG = {
+  apiKey: "AIzaSyB5VpKrz3NYLh-2kLTl5kKxAuO3926bhVs",
+  authDomain: "inmuebleshoy-1b606.firebaseapp.com",
+  databaseURL: "https://inmuebleshoy-1b606-default-rtdb.firebaseio.com",
+  projectId: "inmuebleshoy-1b606",
+  storageBucket: "inmuebleshoy-1b606.firebasestorage.app",
+  messagingSenderId: "945806024071",
+  appId: "1:945806024071:web:8bd141e96823d0da950722"
+};
+const CLD = {
+  cloud: 'tu-cloud-name',     // Tu Cloud Name de Cloudinary
+  preset: 'tu-preset-name'    // Tu unsigned upload preset
+};
+// ════════════════════════════════════════════════════════
+
+// ── ESTADO ──
+let db = null, auth = null, currentUser = null, currentUserRole = null;
+let allProps = [], pendingPhotos = [], agentPhotoFile = null, editingPropId = null;
+let favs = JSON.parse(localStorage.getItem('ih_favs') || '{}');
+
+// ── INIT ──
+function initApp() {
+  // Warn if opened as local file
+  if (location.protocol === 'file:') {
+    document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:999999;background:#e74c3c;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-family:sans-serif">
+      ⚠️ Estás abriendo el archivo local. Firebase <strong>no funcionará</strong> así. 
+      Sube el archivo a <strong>GitHub Pages</strong> o usa un servidor web para que funcione correctamente.
+    </div>`);
+    document.body.style.paddingTop = '44px';
+  }
+  try {
+    firebase.initializeApp(FB_CFG);
+    db = firebase.database();
+    auth = firebase.auth();
+    auth.onAuthStateChanged(async user => {
+      currentUser = user;
+      if (user) {
+        // Hardcoded admins — always admin regardless of DB
+        const ADMIN_EMAILS = ['hector.alaniz@me.com', 'hector.hea2l@gmail.com'];
+        if (ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+          currentUserRole = 'admin';
+          // Also write to DB so Firebase rules work (silent, best-effort)
+          try { db.ref('admins/' + user.uid).set(true); } catch(e) {}
+        } else {
+          // Check Firebase admins node for any other future admins
+          try {
+            const adminSnap = await db.ref('admins/' + user.uid).once('value');
+            currentUserRole = adminSnap.exists() ? 'admin' : 'agent';
+          } catch(e) {
+            currentUserRole = 'agent';
+          }
+        }
+      } else {
+        currentUserRole = null;
+      }
+      updateNavForUser(user);
+      // Only load admin data if panel is already open
+      if (user && document.getElementById('admp').classList.contains('open')) { loadAllAdminData(); }
+    });
+    loadPublicData();
+  } catch(e) {
+    console.warn('Firebase no configurado, usando datos demo:', e.message);
+    loadDemoData();
+  }
+  renderStaticContent();
+}
+
+function updateNavForUser(user) {
+  const btn = document.getElementById('nav-login-btn');
+  if (user) {
+    btn.textContent = currentUserRole === 'admin' ? '⚙ Admin' : '⚙ Mi Panel';
+    btn.onclick = openAdmin;
+  }
+  else { btn.textContent = 'Iniciar sesión'; btn.onclick = () => OM('mlogin'); }
+}
+
+// ── DATOS PÚBLICOS ──
+function loadPublicData() {
+  if (!db) { loadDemoData(); return; }
+  db.ref('properties').on('value', snap => {
+    allProps = [];
+    snap.forEach(c => allProps.push({ id: c.key, ...c.val() }));
+    renderGrids();
+  }, () => loadDemoData());
+  db.ref('agents').on('value', snap => {
+    const ags = [];
+    snap.forEach(c => ags.push({ id: c.key, ...c.val() }));
+    renderAgents(ags.length ? ags : DEMO_AGENTS);
+  }, () => renderAgents(DEMO_AGENTS));
+}
+
+function loadDemoData() {
+  allProps = DEMO_PROPS;
+  renderGrids();
+  renderAgents(DEMO_AGENTS);
+}
+
+// ── DEMO DATA ──
+const DEMO_PROPS = [
+  {id:'d1',title:'Casa en Fraccionamiento Las Américas',city:'Zacatecas, Zac.',price:'$3,200,000',currency:'MXN',beds:3,baths:2,sqm:180,sqmLand:250,parking:2,type:'venta',cat:'Casa',photos:[],desc:'Hermosa casa en fraccionamiento privado con jardín, estacionamiento y vigilancia 24/7.',bg:'#d4e6f1'},
+  {id:'d2',title:'Departamento en Centro Histórico',city:'Zacatecas, Zac.',price:'$1,850,000',currency:'MXN',beds:2,baths:1,sqm:85,sqmLand:0,parking:1,type:'venta',cat:'Departamento',photos:[],desc:'Departamento céntrico con acabados modernos y vista al centro histórico.',bg:'#d5f5e3'},
+  {id:'d3',title:'Casa Residencial en Lomas del Lago',city:'Guadalupe, Zac.',price:'$4,500,000',currency:'MXN',beds:4,baths:3,sqm:320,sqmLand:480,parking:3,type:'venta',cat:'Casa',photos:[],desc:'Residencia de lujo en Guadalupe con alberca, jardín y cuarto de servicio.',bg:'#fdebd0'},
+  {id:'d4',title:'Terreno en Zona Dorada',city:'Zacatecas, Zac.',price:'$980,000',currency:'MXN',beds:0,baths:0,sqm:0,sqmLand:400,parking:0,type:'venta',cat:'Terreno',photos:[],desc:'Terreno plano en zona de alta plusvalía, escrituras limpias, servicios disponibles.',bg:'#f9ebea'},
+  {id:'d5',title:'Casa en Renta Fraccionamiento La Escondida',city:'Guadalupe, Zac.',price:'$12,000',currency:'MXN/mes',beds:3,baths:2,sqm:160,sqmLand:200,parking:2,type:'renta',cat:'Casa',photos:[],desc:'Cómoda casa amueblada en fraccionamiento privado con seguridad.',bg:'#e8d8f0'},
+  {id:'d6',title:'Departamento en Renta Centro',city:'Zacatecas, Zac.',price:'$7,500',currency:'MXN/mes',beds:2,baths:1,sqm:75,sqmLand:0,parking:1,type:'renta',cat:'Departamento',photos:[],desc:'Departamento amueblado a pasos del centro histórico.',bg:'#d0e8f0'},
+  {id:'d7',title:'Local Comercial en Av. López Mateos',city:'Guadalupe, Zac.',price:'$9,000',currency:'MXN/mes',beds:0,baths:1,sqm:60,sqmLand:0,parking:2,type:'renta',cat:'Local comercial',photos:[],desc:'Local en avenida principal con alto flujo vehicular y peatonal.',bg:'#d6f5d6'},
+  {id:'d8',title:'Casa en Renta en El Orito',city:'Zacatecas, Zac.',price:'$8,500',currency:'MXN/mes',beds:2,baths:1,sqm:100,sqmLand:150,parking:1,type:'renta',cat:'Casa',photos:[],desc:'Casa tranquila en colonia residencial, ideal para familias.',bg:'#fff3cd'},
+];
+const DEMO_AGENTS = [
+  {id:'a1',name:'Carlos Mendoza',zone:'CDMX · Polanco',props:87,years:8,initials:'CM',bg:'#d4f0e0',color:'#1a7a40',photo:''},
+  {id:'a2',name:'Ana Reséndiz',zone:'Monterrey · San Pedro',props:64,years:5,initials:'AR',bg:'#d4e4f0',color:'#1a4070',photo:''},
+  {id:'a3',name:'Luis Hernández',zone:'Guadalajara · Zapopan',props:52,years:6,initials:'LH',bg:'#ead4f0',color:'#6a1080',photo:''},
+  {id:'a4',name:'Sofía Ramírez',zone:'Cancún · Hotel Zone',props:48,years:4,initials:'SR',bg:'#f0d4d4',color:'#901a1a',photo:''},
+];
+const ZONES = [
+  {name:'Ciudad de México',count:'128,400 propiedades',color:'#1e3a5f'},
+  {name:'Monterrey',count:'64,200 propiedades',color:'#1a3a2a'},
+  {name:'Guadalajara',count:'58,700 propiedades',color:'#3a1a1a'},
+  {name:'Cancún',count:'42,100 propiedades',color:'#1a2f3a'},
+  {name:'Querétaro',count:'38,900 propiedades',color:'#2a1a3a'},
+  {name:'Mérida',count:'31,500 propiedades',color:'#3a2a1a'},
+  {name:'Tijuana',count:'28,400 propiedades',color:'#1a3a35'},
+  {name:'Puebla',count:'27,000 propiedades',color:'#3a1a2a'},
+];
+const POSTS = [
+  {tag:'Guía de compra',date:'1 Jun 2025',title:'Gastos notariales en tu crédito hipotecario: guía completa 2025',excerpt:'Todo lo que debes saber sobre los costos adicionales al comprar una propiedad en México.'},
+  {tag:'Arrendamiento',date:'28 May 2025',title:'Cómo compartir casa con roomies de forma segura en México',excerpt:'Consejos legales y prácticos para vivir en copropiedad sin conflictos.'},
+  {tag:'Inversión',date:'22 May 2025',title:'Exclusividad inmobiliaria: la estrategia ganadora para vender en 2025',excerpt:'Por qué trabajar con un agente exclusivo maximiza el precio de venta de tu inmueble.'},
+];
+
+// ── RENDER ──
+function renderGrids() {
+  const v = allProps.filter(p => p.type === 'venta');
+  const r = allProps.filter(p => p.type === 'renta');
+  const d = allProps.filter(p => p.type === 'desarrollo');
+  setGrid('venta-grid', v, 'No hay propiedades en venta aún.');
+  setGrid('renta-grid', r, 'No hay propiedades en renta aún.');
+  setGrid('dev-grid', d, 'No hay desarrollos publicados aún.');
+}
+function setGrid(id, arr, emptyMsg) {
+  document.getElementById(id).innerHTML = arr.length
+    ? arr.map(propCard).join('')
+    : `<p style="color:var(--g400);font-size:13px;padding:20px 0">${emptyMsg}</p>`;
+}
+function propCard(p) {
+  const bcls = p.type==='renta' ? 'pbadge r' : p.type==='desarrollo' ? 'pbadge d' : 'pbadge v';
+  const btxt = p.type==='renta' ? 'En renta' : p.type==='desarrollo' ? 'Preventa' : 'En venta';
+  const hasImg = p.photos && p.photos.length > 0;
+  const imgInner = hasImg
+    ? `<img src="${escHtml(p.photos[0])}" alt="${escHtml(p.title)}" loading="lazy">`
+    : `<svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><small>${escHtml(p.cat||p.type)}</small>`;
+  const bg = hasImg ? '' : ` style="background:${p.bg||'#e8eaed'}"`;
+  const isFav = !!favs[p.id];
+  return `<div class="pcard" onclick="openPropDetail('${escAttr(p.id)}')">
+    <div class="pimg">
+      <div class="pimc"${bg}>${imgInner}</div>
+      <span class="${bcls}">${btxt}</span>
+      <button class="pfav${isFav?' on':''}" id="fv-${escAttr(p.id)}" onclick="toggleFav(event,'${escAttr(p.id)}')" title="Guardar en favoritos">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </button>
+    </div>
+    <div class="pbody">
+      <div class="pp">${escHtml(p.price)} <span>${escHtml(p.currency||'MXN')}</span></div>
+      <div class="pt" title="${escAttr(p.title)}">${escHtml(p.title)}</div>
+      <div class="ploc"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(p.city||'')}</div>
+      <div class="pfs">
+        <div class="pf"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 22V10l9-8 9 8v12"/><path d="M9 22v-7h6v7"/></svg><strong>${p.beds}</strong>&nbsp;rec.</div>
+        <div class="pf"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M7 4v16M7 8H3a1 1 0 00-1 1v5a1 1 0 001 1h4"/><path d="M21 4v4a2 2 0 01-2 2H7"/><path d="M3 20h18"/></svg><strong>${p.baths}</strong>&nbsp;baños</div>
+        <div class="pf"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/></svg><strong>${p.sqm}</strong>&nbsp;m² const.</div>
+        ${p.sqmLand ? `<div class="pf"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 20h18M3 20l4-8 4 4 3-6 4 10"/></svg><strong>${p.sqmLand}</strong>&nbsp;m² terr.</div>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+function renderAgents(ags) {
+  document.getElementById('agents-grid').innerHTML = ags.map(a => {
+    const avInner = a.photo
+      ? `<img src="${escHtml(a.photo)}" alt="${escHtml(a.name)}">`
+      : (a.initials || '?');
+    const avStyle = a.photo ? '' : ` style="background:${a.bg||'#eee'};color:${a.color||'#333'}"`;
+    return `<div class="acard">
+      <div class="aav"${avStyle}>${avInner}</div>
+      <div class="aname">${escHtml(a.name)}</div>
+      <div class="azone">${escHtml(a.zone||'')}</div>
+      <div class="astats">
+        <div class="ast"><strong>${a.props||0}</strong>propiedades</div>
+        <div class="ast"><strong>${a.years||0}</strong>años exp.</div>
+      </div>
+      <button class="bct" onclick="openAgentContact('${escAttr(a.name)}','${escAttr(a.phone||'')}','')">Contactar agente</button>
+    </div>`;
+  }).join('');
+}
+function renderStaticContent() {
+  document.getElementById('zones-grid').innerHTML = ZONES.map(z =>
+    `<div class="zcard" style="background:${z.color}" onclick="qs('${escAttr(z.name)}')">
+      <div class="zov"><div class="zn">${escHtml(z.name)}</div><div class="zc">${z.count}</div></div>
+    </div>`
+  ).join('');
+  document.getElementById('blog-grid').innerHTML = POSTS.map(p =>
+    `<div class="bcard2">
+      <div class="bimg2"><svg viewBox="0 0 24 24" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span class="btag2">${escHtml(p.tag)}</span></div>
+      <div class="bbody2"><div class="bdate2">${escHtml(p.date)}</div><div class="btitle2">${escHtml(p.title)}</div><div class="bexc2">${escHtml(p.excerpt)}</div></div>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL SYSTEM — corrección definitiva del bug de
+//  modales anidados. La clave: OM siempre cierra TODOS
+//  los modales abiertos antes de abrir el nuevo.
+// ══════════════════════════════════════════════════════
+function OM(id) {
+  // Cerrar todos los modales abiertos primero
+  document.querySelectorAll('.moverlay.open').forEach(el => {
+    el.classList.remove('open');
+  });
+  // Abrir el nuevo
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+function CM(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+  // Solo restaurar scroll si no hay otros modales abiertos
+  if (!document.querySelector('.moverlay.open')) {
+    document.body.style.overflow = '';
+  }
+}
+function overlayClick(e, id) {
+  if (e.target === e.currentTarget) CM(id);
+}
+// ESC cierra todos los modales
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.moverlay.open').forEach(el => el.classList.remove('open'));
+    document.body.style.overflow = '';
+  }
+});
+
+// ── SEARCH ──
+function setTab(el, type) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  const ph = {comprar:'Ciudad o colonia para comprar…',rentar:'Ciudad o colonia para rentar…',desarrollos:'Busca desarrollos y preventas…'};
+  document.getElementById('sinput').placeholder = ph[type] || 'Buscar…';
+}
+function doSearch() {
+  const q = document.getElementById('sinput').value.trim() || 'México';
+  OSM(null, q);
+}
+function qs(city) {
+  document.getElementById('sinput').value = city;
+  OSM(null, city);
+}
+// OSM = Open Search Modal
+function OSM(mode, query) {
+  const q = (query || document.getElementById('sinput').value.trim() || '').toLowerCase();
+  const m = mode || document.querySelector('.tab.on')?.textContent.trim() || 'Comprar';
+  let results = [...allProps];
+  if (q) {
+    results = results.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      (p.city||'').toLowerCase().includes(q) ||
+      (p.cat||'').toLowerCase().includes(q)
+    );
+  }
+  if (mode === 'Comprar') results = results.filter(p => p.type === 'venta');
+  else if (mode === 'Rentar') results = results.filter(p => p.type === 'renta');
+  else if (mode === 'Desarrollos') results = results.filter(p => p.type === 'desarrollo');
+  document.getElementById('ms-title').textContent = q ? `Resultados para "${q}"` : 'Todas las propiedades';
+  document.getElementById('ms-sub').textContent = `${results.length} propiedades · ${m}`;
+  document.getElementById('ms-results').innerHTML = results.length
+    ? results.map(propCard).join('')
+    : '<p style="color:var(--g400);font-size:13px;padding:20px 0">No se encontraron propiedades.</p>';
+  OM('msearch');
+}
+function filterType(type) {
+  document.getElementById('ssel').value = type;
+  document.getElementById('sinput').placeholder = `Busca ${type.toLowerCase()} en cualquier ciudad…`;
+  goTo('comprar');
+}
+
+// ── PROP DETAIL ──
+async function openPropDetail(id) {
+  const p = allProps.find(x => x.id === id);
+  if (!p) return;
+
+  // Try to get agent phone from Firebase
+  let agentName = 'Agente InmuebleHoy';
+  let agentPhone = '';
+  if (db && p.agentId) {
+    try {
+      const snap = await db.ref('agents/' + p.agentId).once('value');
+      const agData = snap.val();
+      if (agData) { agentName = agData.name || agentName; agentPhone = agData.phone || ''; }
+    } catch(e) {}
+  }
+
+  // Build photo collage with lightbox
+  let imgs = '';
+  const photos = p.photos && p.photos.length ? p.photos : [];
+  const photosJson = JSON.stringify(photos).replace(/'/g, "\\'");
+  if (!photos.length) {
+    imgs = `<div style="background:${p.bg||'#eee'};height:180px;border-radius:var(--rl);display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--g400);font-size:13px">Sin fotos publicadas</div>`;
+  } else if (photos.length === 1) {
+    imgs = `<div class="pdimgs"><div class="photo-collage" style="grid-template-columns:1fr">
+      <div style="height:280px"><img src="${escHtml(photos[0])}" onclick="openLbox(${photosJson},0)" alt="foto"></div>
+    </div></div>`;
+  } else if (photos.length === 2) {
+    imgs = `<div class="pdimgs"><div class="photo-collage" style="grid-template-columns:1fr 1fr">
+      <div style="height:220px"><img src="${escHtml(photos[0])}" onclick="openLbox(${photosJson},0)" alt="foto 1"></div>
+      <div style="height:220px"><img src="${escHtml(photos[1])}" onclick="openLbox(${photosJson},1)" alt="foto 2"></div>
+    </div></div>`;
+  } else if (photos.length === 3) {
+    imgs = `<div class="pdimgs"><div class="photo-collage" style="grid-template-columns:2fr 1fr;grid-template-rows:150px 150px">
+      <div style="grid-row:1/3"><img src="${escHtml(photos[0])}" onclick="openLbox(${photosJson},0)" alt="foto 1" style="height:304px"></div>
+      <div><img src="${escHtml(photos[1])}" onclick="openLbox(${photosJson},1)" alt="foto 2" style="height:150px"></div>
+      <div><img src="${escHtml(photos[2])}" onclick="openLbox(${photosJson},2)" alt="foto 3" style="height:150px"></div>
+    </div></div>`;
+  } else {
+    // 4+ photos: big main + 3 thumbnails with "+X more" badge
+    const extra = photos.length - 4;
+    imgs = `<div class="pdimgs"><div class="photo-collage" style="grid-template-columns:2fr 1fr;grid-template-rows:180px 120px">
+      <div style="grid-row:1/3"><img src="${escHtml(photos[0])}" onclick="openLbox(${photosJson},0)" alt="foto 1" style="height:304px"></div>
+      <div><img src="${escHtml(photos[1])}" onclick="openLbox(${photosJson},1)" alt="foto 2" style="height:180px"></div>
+      <div style="position:relative"><img src="${escHtml(photos[2])}" onclick="openLbox(${photosJson},2)" alt="foto 3" style="height:120px">
+        ${photos.length>3 ? `<div onclick="openLbox(${photosJson},3)" style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;cursor:zoom-in;color:#fff;font-size:16px;font-weight:700">+${photos.length-3} fotos</div>` : ''}
+      </div>
+    </div></div>`;
+  }
+  const bt = p.type==='renta' ? 'En renta' : p.type==='desarrollo' ? 'Preventa' : 'En venta';
+  const _aName = agentName.replace(/'/g,"\\'");
+  const _aPhone = agentPhone.replace(/'/g,"\\'");
+  const _pTitle = p.title.replace(/'/g,"\\'");
+  document.getElementById('mprop-c').innerHTML = `
+    ${imgs}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <h2 style="font-size:19px;font-weight:700;flex:1;min-width:200px">${escHtml(p.title)}</h2>
+      <span class="pbadge ${p.type==='renta'?'r':p.type==='desarrollo'?'d':'v'}" style="position:static;display:inline-block">${bt}</span>
+    </div>
+    <div class="pdgrid">
+      <div><label>Precio</label><p>${escHtml(p.price)} ${escHtml(p.currency||'MXN')}</p></div>
+      <div><label>Ubicación</label><p>${escHtml(p.city||'—')}</p></div>
+      ${p.address ? `<div style="grid-column:1/-1"><label>Dirección</label><p style="font-size:13px">${escHtml(p.address)}</p></div>` : ''}
+      <div><label>Recámaras</label><p>${p.beds}</p></div>
+      <div><label>Baños</label><p>${p.baths}</p></div>
+      <div><label>Construcción</label><p>${p.sqm} m²</p></div>
+      ${p.sqmLand ? `<div><label>Terreno</label><p>${p.sqmLand} m²</p></div>` : ''}
+      ${p.parking ? `<div><label>Estacionamientos</label><p>${p.parking}</p></div>` : ''}
+      <div><label>Categoría</label><p>${escHtml(p.cat||'—')}</p></div>
+    </div>
+    ${p.desc ? `<p style="font-size:13px;color:var(--g600);line-height:1.7;margin-bottom:16px">${escHtml(p.desc)}</p>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="mbg" style="margin-bottom:0" onclick="openAgentContact('${_aName}','${_aPhone}','${_pTitle}');CM('mprop')">Contactar agente</button>
+      <button class="mbo" onclick="toggleFav(null,'${escAttr(p.id)}')">❤ ${favs[p.id]?'Guardado':'Guardar'}</button>
+    </div>
+    <div style="margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid var(--g200)">
+      <div style="padding:8px 12px;background:var(--g50);font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Ubicación aproximada
+      </div>
+      <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(p.address || ((p.zone?p.zone+', ':'')+p.city+', México'))}&output=embed&z=16" width="100%" height="220" style="display:block;border:none" loading="lazy"></iframe>
+    </div>
+    <button class="mbo" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="generatePropPDF('${escAttr(p.id)}')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Generar ficha PDF
+    </button>`;
+  OM('mprop');
+}
+
+// ── FAVORITES ──
+function toggleFav(evt, id) {
+  if (evt) evt.stopPropagation();
+  favs[id] = !favs[id];
+  localStorage.setItem('ih_favs', JSON.stringify(favs));
+  const btn = document.getElementById('fv-' + id);
+  if (btn) btn.classList.toggle('on', !!favs[id]);
+  showToast(favs[id] ? '❤ Guardado en favoritos' : 'Eliminado de favoritos', favs[id] ? 'ok' : '');
+}
+
+// ── CONTACT ──
+let _currentAgentPhone = '';
+let _currentAgentName = '';
+let _currentPropTitle = '';
+
+function openAgentContact(name, phone, propTitle) {
+  _currentAgentName = name || 'InmuebleHoy';
+  _currentAgentPhone = phone || '';
+  _currentPropTitle = propTitle || '';
+  document.getElementById('ag-title').textContent = 'Contactar a ' + _currentAgentName;
+  const note = document.getElementById('ag-wa-note');
+  const waBtn = document.getElementById('ag-wa-btn');
+  if (_currentAgentPhone) {
+    waBtn.style.display = 'flex';
+    note.style.display = 'block';
+  } else {
+    waBtn.style.display = 'none';
+    note.style.display = 'none';
+  }
+  const subtitle = document.getElementById('ag-subtitle');
+  subtitle.textContent = _currentAgentPhone
+    ? 'Tu mensaje llegará directo al WhatsApp del agente'
+    : 'El agente se pondrá en contacto a la brevedad';
+  const ok = document.getElementById('ag-ok');
+  ok.style.display = 'none';
+  ['c-name','c-tel','c-msg'].forEach(id => document.getElementById(id).value = '');
+  OM('magent');
+}
+
+function sendContactWhatsApp() {
+  const name = document.getElementById('c-name').value.trim();
+  const tel  = document.getElementById('c-tel').value.trim();
+  if (!name || !tel) { showToast('Por favor llena nombre y teléfono/correo', 'err'); return; }
+  const msg = document.getElementById('c-msg').value.trim() || 'Hola, me interesa esta propiedad.';
+  const propPart = _currentPropTitle ? `\n🏠 Propiedad: *${_currentPropTitle}*` : '';
+  const text = `Hola *${_currentAgentName}*, soy *${name}*.${propPart}\n📞 Mi contacto: ${tel}\n\n${msg}`;
+  const phone = _currentAgentPhone.replace(/\D/g,'');
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+  const ok = document.getElementById('ag-ok');
+  ok.textContent = '✅ WhatsApp abierto. ¡Tu mensaje está listo para enviar!';
+  ok.style.display = 'block';
+  setTimeout(() => CM('magent'), 3000);
+}
+
+function sendContact() {
+  if (!document.getElementById('c-name').value.trim() || !document.getElementById('c-tel').value.trim()) {
+    showToast('Por favor llena nombre y teléfono/correo', 'err'); return;
+  }
+  const ok = document.getElementById('ag-ok');
+  ok.textContent = '✅ Mensaje registrado. El agente te contactará pronto.';
+  ok.style.display = 'block';
+  setTimeout(() => CM('magent'), 2500);
+}
+function sendCoForm() {
+  const ok = document.getElementById('co-ok');
+  ok.textContent = '✅ Mensaje enviado. Te contactaremos pronto.';
+  ok.style.display = 'block';
+  setTimeout(() => CM('mcontact'), 2500);
+}
+
+// ── AUTH ──
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('l-err');
+  const btn = document.getElementById('l-btn');
+  if (!email || !pass) { showMsgEl(errEl, 'Ingresa correo y contraseña'); return; }
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    CM('mlogin');
+    showToast('✅ Sesión iniciada correctamente', 'ok');
+    setTimeout(openAdmin, 400);
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found': 'Usuario no encontrado.',
+      'auth/wrong-password': 'Contraseña incorrecta.',
+      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+      'auth/invalid-email': 'Correo inválido.',
+      'auth/too-many-requests': 'Demasiados intentos. Espera un momento.',
+      'auth/network-request-failed': 'Sin conexión a internet.',
+    };
+    showMsgEl(errEl, msgs[e.code] || e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+}
+async function doReset() {
+  const email = document.getElementById('r-email').value.trim();
+  const msgEl = document.getElementById('r-msg');
+  if (!email) { showMsgEl(msgEl, 'Ingresa tu correo', 'merr'); return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    msgEl.className = 'msuc';
+    msgEl.textContent = '✅ Enlace de recuperación enviado a ' + email;
+    msgEl.style.display = 'block';
+    setTimeout(() => CM('mreset'), 3000);
+  } catch(e) {
+    showMsgEl(msgEl, 'No se pudo enviar. Verifica el correo.', 'merr');
+  }
+}
+async function doLogout() {
+  if (auth) await auth.signOut();
+  closeAdmin();
+  showToast('Sesión cerrada', 'ok');
+}
+
+// ── ADMIN PANEL ──
+function openAdmin() {
+  if (!currentUser) { OM('mlogin'); return; }
+  document.getElementById('adm-email').textContent = currentUser.email + (currentUserRole === 'admin' ? ' · Admin' : ' · Agente');
+  // Show/hide tabs depending on role
+  const allTabBtns = document.querySelectorAll('.adtab');
+  const agentsTab = document.getElementById('tab-agents');
+  const addAgentTab = document.getElementById('tab-addagent');
+  if (agentsTab) agentsTab.style.display = currentUserRole === 'admin' ? '' : 'none';
+  if (addAgentTab) addAgentTab.style.display = currentUserRole === 'admin' ? '' : 'none';
+  document.getElementById('admp').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  loadAllAdminData();
+}
+function closeAdmin() {
+  document.getElementById('admp').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function showAT(id, btn) {
+  document.querySelectorAll('.asec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.atab').forEach(b => b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+  if (id === 'at-props') loadPropsList();
+  if (id === 'at-agents') loadAgentsList();
+  if (id === 'at-addprop') loadAgentSelect();
+}
+function loadAllAdminData() {
+  // Small delay to ensure role is set before loading
+  setTimeout(() => {
+    loadPropsList();
+    if (currentUserRole === 'admin') loadAgentsList();
+    loadAgentSelect();
+  }, 300);
+}
+
+function loadPropsList() {
+  const el = document.getElementById('adm-props-list');
+  if (!el) return;
+  if (!db) { el.innerHTML = `<p class="merr">Firebase no configurado.</p>`; return; }
+  db.ref('properties').once('value', snap => {
+    let props = [];
+    snap.forEach(c => props.push({ id: c.key, ...c.val() }));
+    // Agents only see their own properties
+    if (currentUserRole !== 'admin' && currentUser) {
+      props = props.filter(p => p.ownerId === currentUser.uid || p.agentId === currentUser.uid);
+    }
+    if (!props.length) {
+      el.innerHTML = '<p style="font-size:13px;color:var(--g400)">No has publicado propiedades aún. Ve a "➕ Publicar propiedad".</p>';
+      return;
+    }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+      ${props.map(p => {
+        const canEdit = currentUserRole === 'admin' || p.ownerId === currentUser?.uid || p.agentId === currentUser?.uid;
+        const typeColor = p.type==='venta'?'#27ae60':p.type==='renta'?'#2980b9':'#e67e22';
+        const typeTxt = p.type==='venta'?'En venta':p.type==='renta'?'En renta':'Preventa';
+        const thumb = (p.photos&&p.photos.length) ? `<img src="${escHtml(p.photos[0])}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="width:100%;height:100%;background:#e8eaed;display:flex;align-items:center;justify-content:center;color:#9aa0a6;font-size:11px">Sin foto</div>`;
+        return `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+          <div style="height:140px;position:relative;overflow:hidden">
+            ${thumb}
+            <span style="position:absolute;top:8px;left:8px;background:${typeColor};color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px">${typeTxt}</span>
+            <span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:3px 7px;border-radius:50px">📷 ${(p.photos||[]).length}</span>
+          </div>
+          <div style="padding:12px">
+            <div style="font-size:14px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title)}</div>
+            <div style="font-size:12px;color:var(--g600);margin-bottom:6px">📍 ${escHtml(p.city||'—')}</div>
+            <div style="font-size:16px;font-weight:700;color:var(--gr);margin-bottom:10px">${escHtml(p.price)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              ${canEdit ? `<button class="bedi" style="flex:1;min-width:60px" onclick="editProp('${escAttr(p.id)}')">✏ Editar</button>` : ''}
+              ${canEdit ? `<button class="bdel" style="flex:1;min-width:60px" onclick="deleteProp('${escAttr(p.id)}','${escAttr(p.title)}')">🗑 Borrar</button>` : ''}
+              <button class="bsv" style="font-size:11px;padding:6px 10px" onclick="generatePropPDF('${escAttr(p.id)}')">PDF</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+}
+
+function loadAgentsList() {
+  const el = document.getElementById('adm-agents-list');
+  if (!el) return;
+  if (!db) { el.innerHTML = `<p class="merr">Firebase no configurado.</p>`; return; }
+  db.ref('agents').once('value', snap => {
+    const ags = [];
+    snap.forEach(c => ags.push({ id: c.key, ...c.val() }));
+    if (!ags.length) { el.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay agentes registrados aún.</p>'; return; }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+      ${ags.map(a => {
+        const initials = (a.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const avHtml = a.photo ? `<img src="${escHtml(a.photo)}" style="width:52px;height:52px;border-radius:50%;object-fit:cover">` : `<div style="width:52px;height:52px;border-radius:50%;background:${a.bg||'#d4f0e0'};color:${a.color||'#1a7a40'};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">${initials}</div>`;
+        return `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            ${avHtml}
+            <div>
+              <div style="font-size:14px;font-weight:700">${escHtml(a.name)}</div>
+              <div style="font-size:11px;color:var(--g600)">${escHtml(a.zone||'—')}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--g600);margin-bottom:4px">📧 ${escHtml(a.email||'—')}</div>
+          <div style="font-size:12px;color:var(--g600);margin-bottom:10px">📱 ${escHtml(a.phone||'—')}</div>
+          <button class="bdel" style="width:100%" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name)}')">🗑 Eliminar agente</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+}
+
+function loadAgentSelect() {
+  if (!db) return;
+  if (!document.getElementById('pf-agent')) return;
+  db.ref('agents').once('value', snap => {
+    const sel = document.getElementById('pf-agent');
+    const opts = ['<option value="">— Sin asignar —</option>'];
+    snap.forEach(c => { const a = c.val(); opts.push(`<option value="${escAttr(c.key)}">${escHtml(a.name)}</option>`); });
+    sel.innerHTML = opts.join('');
+  });
+}
+
+function editProp(id) {
+  if (!db) return;
+  db.ref('properties/' + id).once('value', snap => {
+    const p = snap.val();
+    if (!p) return;
+    editingPropId = id;
+    pendingPhotos = (p.photos||[]).map(u => ({ file: null, url: u }));
+    document.getElementById('pf-title').value = p.title || '';
+    document.getElementById('pf-price').value = p.price || '';
+    const rawPEl = document.getElementById('pf-price-raw');
+    if (rawPEl) { const num = parseFloat(String(p.price||'0').replace(/[^0-9.]/g,'')); rawPEl.value = isNaN(num)?'':num; }
+    const prevEl = document.getElementById('pf-price-preview');
+    if (prevEl) prevEl.textContent = p.price || '';
+    document.getElementById('pf-type').value = p.type || 'venta';
+    document.getElementById('pf-cat').value = p.cat || 'Casa';
+    document.getElementById('pf-cur').value = p.currency || 'MXN';
+    document.getElementById('pf-beds').value = p.beds || 0;
+    document.getElementById('pf-baths').value = p.baths || 0;
+    document.getElementById('pf-sqm').value = p.sqm || 0;
+    document.getElementById('pf-sqm-land').value = p.sqmLand || 0;
+    document.getElementById('pf-parking').value = p.parking || 0;
+    document.getElementById('pf-city').value = p.city || '';
+    document.getElementById('pf-zone').value = p.zone || '';
+    const addrEl = document.getElementById('pf-address'); if (addrEl) addrEl.value = p.address || '';
+    document.getElementById('pf-desc').value = p.desc || '';
+    renderPhotoPreviews();
+    // Ir a pestaña de formulario
+    document.querySelectorAll('.asec').forEach(s => s.classList.remove('on'));
+    document.querySelectorAll('.atab').forEach(b => b.classList.remove('on'));
+    document.getElementById('at-addprop').classList.add('on');
+    document.querySelectorAll('.atab')[2].classList.add('on');
+    document.getElementById('prop-form-title').textContent = 'Editar propiedad';
+    document.getElementById('btn-saveprop').textContent = '💾 Actualizar propiedad';
+    document.getElementById('btn-canceledit').style.display = 'inline-block';
+    showToast('Editando: ' + p.title, 'ok');
+  });
+}
+function cancelEdit() {
+  editingPropId = null;
+  pendingPhotos = [];
+  renderPhotoPreviews();
+  ['pf-title','pf-price','pf-zone','pf-desc','pf-address'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; }); document.getElementById('pf-sqm').value=120; document.getElementById('pf-sqm-land').value=0; document.getElementById('pf-parking').value=1;
+  document.getElementById('prop-form-title').textContent = 'Publicar nueva propiedad';
+  document.getElementById('btn-saveprop').textContent = '💾 Publicar propiedad';
+  document.getElementById('btn-canceledit').style.display = 'none';
+  document.getElementById('prop-form-msg').innerHTML = '';
+}
+async function deleteProp(id, title) {
+  if (!confirm(`¿Eliminar "${title}"? Esta acción no se puede deshacer.`)) return;
+  await db.ref('properties/' + id).remove();
+  showToast('Propiedad eliminada', 'ok');
+  loadPropsList();
+}
+async function deleteAgent(id, name) {
+  if (!confirm(`¿Eliminar agente "${name}"?`)) return;
+  await db.ref('agents/' + id).remove();
+  showToast('Agente eliminado', 'ok');
+  loadAgentsList();
+}
+
+// ── SAVE PROPERTY ──
+function showSaveSuccess(title, action) {
+  const existing = document.getElementById('save-success-overlay');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'save-success-overlay';
+  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn .3s';
+  div.innerHTML = `<div style="background:#fff;border-radius:20px;padding:40px 36px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="width:72px;height:72px;background:#eafaf1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;color:#2c3e50;margin-bottom:8px">¡Propiedad ${action}!</h2>
+    <p style="font-size:14px;color:#5f6368;margin-bottom:6px">"${title}"</p>
+    <p style="font-size:13px;color:#9aa0a6;margin-bottom:24px">Ya aparece en el portal y todos los agentes pueden verla.</p>
+    <div style="width:100%;height:4px;background:#e8eaed;border-radius:2px;overflow:hidden;margin-bottom:20px"><div style="height:100%;background:#2ecc71;border-radius:2px;animation:prgrs 2.5s linear forwards"></div></div>
+    <button onclick="document.getElementById('save-success-overlay').remove()" style="background:#2ecc71;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">¡Listo!</button>
+  </div>`;
+  document.body.appendChild(div);
+  div.onclick = e => { if (e.target === div) div.remove(); };
+  setTimeout(() => { if (div.parentNode) div.remove(); }, 3000);
+}
+function fmtPrice(n, currency) {
+  if (!n) return '$0';
+  const num = parseFloat(String(n).replace(/[^0-9.]/g,''));
+  if (isNaN(num)) return n; // already formatted string
+  const sym = (currency||'MXN').includes('USD') ? 'USD $' : '$';
+  return sym + num.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function updatePriceDisplay(val) {
+  const cur = document.getElementById('pf-cur').value;
+  const num = parseFloat(val) || 0;
+  const sym = cur.includes('USD') ? 'USD ' : '';
+  const formatted = sym + '$' + num.toLocaleString('es-MX');
+  document.getElementById('pf-price-preview').textContent = formatted + ' ' + cur;
+  document.getElementById('pf-price').value = formatted;
+}
+// also update preview when currency changes
+document.addEventListener('DOMContentLoaded', () => {
+  const curSel = document.getElementById('pf-cur');
+  if (curSel) curSel.addEventListener('change', () => {
+    const raw = document.getElementById('pf-price-raw');
+    if (raw) updatePriceDisplay(raw.value);
+  });
+});
+async function saveProp() {
+  const title = document.getElementById('pf-title').value.trim();
+  const rawP = document.getElementById('pf-price-raw'); const price = rawP ? (document.getElementById('pf-price').value.trim() || ('$'+(parseFloat(rawP.value)||0).toLocaleString('es-MX'))) : document.getElementById('pf-price').value.trim();
+  const city  = document.getElementById('pf-city').value.trim();
+  const msgEl = document.getElementById('prop-form-msg');
+  if (!title || !price || !city) {
+    msgEl.innerHTML = `<div class="merr">Por favor completa Título, Precio y Ciudad.</div>`;
+    return;
+  }
+  msgEl.innerHTML = '';
+  const btn = document.getElementById('btn-saveprop');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Guardando…';
+  const photos = await uploadPendingPhotos();
+  const data = {
+    title, price, city,
+    zone: document.getElementById('pf-zone').value.trim(),
+    address: document.getElementById('pf-address').value.trim(),
+    type: document.getElementById('pf-type').value,
+    cat:  document.getElementById('pf-cat').value,
+    currency: document.getElementById('pf-cur').value,
+    beds:  parseInt(document.getElementById('pf-beds').value) || 0,
+    baths: parseInt(document.getElementById('pf-baths').value) || 0,
+    sqm:   parseInt(document.getElementById('pf-sqm').value) || 0,
+    sqmLand: parseInt(document.getElementById('pf-sqm-land').value) || 0,
+    parking: parseInt(document.getElementById('pf-parking').value) || 0,
+    desc:  document.getElementById('pf-desc').value.trim(),
+    photos,
+    agentId: currentUserRole === 'agent' ? currentUser.uid : (document.getElementById('pf-agent').value || currentUser?.uid || null),
+    updatedAt: Date.now(),
+  };
+  try {
+    if (!db) throw new Error('Firebase no configurado. Agrega tus credenciales en la sección de configuración del código.');
+    if (editingPropId) {
+      await db.ref('properties/' + editingPropId).update(data);
+      showToast('✅ Propiedad actualizada', 'ok');
+      showSaveSuccess(title, 'actualizada');
+    } else {
+      data.createdAt = Date.now();
+      data.ownerId = currentUser ? currentUser.uid : null;
+      await db.ref('properties').push(data);
+      showToast('✅ Propiedad publicada', 'ok');
+      showSaveSuccess(title, 'publicada');
+    }
+    cancelEdit();
+    loadPropsList();
+  } catch(e) {
+    console.error('saveProp error:', e);
+    let errMsg = e.message || 'Error desconocido';
+    if (e.code === 'PERMISSION_DENIED' || errMsg.includes('PERMISSION_DENIED')) {
+      errMsg = 'Sin permiso para escribir. Ve a Firebase Console → Realtime Database → Reglas y verifica que ".write": "auth != null" esté configurado.';
+    } else if (errMsg.includes('network') || errMsg.includes('fetch')) {
+      errMsg = 'Sin conexión. Verifica tu internet e intenta de nuevo.';
+    }
+    msgEl.innerHTML = `<div class="merr">❌ ${escHtml(errMsg)}</div>`;
+    btn.disabled = false;
+    btn.textContent = editingPropId ? '💾 Actualizar propiedad' : '💾 Publicar propiedad';
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = editingPropId ? '💾 Actualizar propiedad' : '💾 Publicar propiedad';
+}
+
+// ── SAVE AGENT ──
+async function saveAgent() {
+  const name  = document.getElementById('af-name').value.trim();
+  const zone  = document.getElementById('af-zone').value.trim();
+  const email = document.getElementById('af-email').value.trim();
+  const pass  = document.getElementById('af-pass').value;
+  const msgEl = document.getElementById('agent-form-msg');
+  if (!name || !email || !pass) {
+    msgEl.innerHTML = `<div class="merr">Nombre, correo y contraseña son obligatorios.</div>`; return;
+  }
+  if (pass.length < 6) {
+    msgEl.innerHTML = `<div class="merr">La contraseña debe tener al menos 6 caracteres.</div>`; return;
+  }
+  const btn = document.getElementById('btn-saveagent');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Creando cuenta…';
+  msgEl.innerHTML = '';
+  try {
+    if (!auth) throw new Error('Firebase no configurado.');
+    // Crear usuario en Firebase Auth
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    const uid = cred.user.uid;
+    // Subir foto si hay
+    let photoUrl = '';
+    if (agentPhotoFile) {
+      try { photoUrl = await uploadToCloudinary(agentPhotoFile, 'agents'); }
+      catch(e) { console.warn('No se pudo subir foto del agente:', e.message); }
+    }
+    // Guardar en DB
+    await db.ref('agents/' + uid).set({ name, zone, email, phone: document.getElementById('af-phone').value.trim(), photo: photoUrl, props: parseInt(document.getElementById('af-props').value)||0, years: 0, createdAt: Date.now() });
+    msgEl.innerHTML = `<div class="msuc">✅ Agente "${escHtml(name)}" creado correctamente.<br>Puede iniciar sesión con: <strong>${escHtml(email)}</strong></div>`;
+    showToast('✅ Agente creado: ' + name, 'ok');
+    ['af-name','af-zone','af-email','af-pass'].forEach(id => document.getElementById(id).value = '');
+    agentPhotoFile = null;
+    document.getElementById('agent-photo-prev').innerHTML = '';
+    loadAgentsList();
+    renderAgents([]); // Se recargará vía Firebase listener
+  } catch(e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Este correo ya está registrado.',
+      'auth/invalid-email': 'Correo electrónico inválido.',
+      'auth/weak-password': 'Contraseña demasiado débil.',
+      'auth/network-request-failed': 'Sin conexión a internet.',
+    };
+    msgEl.innerHTML = `<div class="merr">${msgs[e.code] || escHtml(e.message)}</div>`;
+  }
+  btn.disabled = false;
+  btn.textContent = '👤 Crear agente';
+}
+
+// ── PHOTO UPLOAD (Cloudinary gratis) ──
+function doDragOver(e) { e.preventDefault(); document.getElementById('drop-area').classList.add('drag'); }
+function doDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-area').classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+}
+function handleFiles(files) {
+  Array.from(files).filter(f => f.type.startsWith('image/')).forEach(f => {
+    if (f.size > 5 * 1024 * 1024) { showToast(`${f.name}: máximo 5MB`, 'err'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => { pendingPhotos.push({ file: f, url: ev.target.result }); renderPhotoPreviews(); };
+    reader.readAsDataURL(f);
+  });
+}
+function handleAgentPhoto(files) {
+  if (!files[0]) return;
+  agentPhotoFile = files[0];
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('agent-photo-prev').innerHTML =
+      `<img src="${ev.target.result}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;margin-top:8px">`;
+  };
+  reader.readAsDataURL(agentPhotoFile);
+}
+function renderPhotoPreviews() {
+  document.getElementById('photo-prevs').innerHTML = pendingPhotos.map((p, i) =>
+    `<div class="upvi"><img src="${p.url}" alt="foto ${i+1}"><button onclick="removePhoto(${i})" title="Eliminar">×</button></div>`
+  ).join('');
+}
+function removePhoto(i) { pendingPhotos.splice(i, 1); renderPhotoPreviews(); }
+
+async function uploadPendingPhotos() {
+  const toUpload = pendingPhotos.filter(p => p.file !== null);
+  const existing = pendingPhotos.filter(p => p.file === null).map(p => p.url);
+  if (!toUpload.length) return existing;
+  const bar = document.getElementById('upload-pbar');
+  const fill = document.getElementById('upload-pfill');
+  bar.style.display = 'block';
+  fill.style.width = '0%';
+  const urls = [...existing];
+  for (let i = 0; i < toUpload.length; i++) {
+    try {
+      const url = await uploadToCloudinary(toUpload[i].file, 'properties');
+      urls.push(url);
+    } catch(e) {
+      console.warn('Upload falló, usando base64:', e.message);
+      urls.push(toUpload[i].url); // fallback a base64 local
+    }
+    fill.style.width = ((i + 1) / toUpload.length * 100) + '%';
+  }
+  setTimeout(() => { bar.style.display = 'none'; fill.style.width = '0%'; }, 800);
+  return urls;
+}
+async function compressImage(file, maxPx=1200, quality=0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadToCloudinary(file, folder) {
+  if (CLD.cloud === 'tu-cloud-name') {
+    // Sin Cloudinary: comprimir y guardar como base64 comprimido (~80KB por foto)
+    try { return await compressImage(file); } catch(e) {}
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = ev => resolve(ev.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLD.preset);
+  fd.append('folder', folder);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLD.cloud}/image/upload`, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error('Cloudinary HTTP ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.secure_url;
+}
+
+// ── UTILITIES ──
+function goTo(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 3000);
+}
+function showMsgEl(el, msg, cls) {
+  el.className = cls || 'merr';
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+// ── PDF GENERATION ──
+async function generatePropPDF(propId) {
+  const p = allProps.find(x => x.id === propId);
+  if (!p) return;
+  showToast('Generando ficha PDF…', '');
+
+  // Get creator info (current logged-in user or admin)
+  let creatorName = 'InmuebleHoy Realty';
+  let creatorEmail = 'contacto@inmuebleshoy.com';
+  let creatorPhone = '4921412672';
+  if (currentUser) {
+    // Try to get agent data from Firebase
+    try {
+      const snap = await db.ref('agents/' + currentUser.uid).once('value');
+      const agentData = snap.val();
+      if (agentData) {
+        creatorName = agentData.name || currentUser.email;
+        creatorEmail = agentData.email || currentUser.email;
+        creatorPhone = agentData.phone || creatorPhone;
+      } else {
+        creatorName = currentUser.email.split('@')[0];
+        creatorEmail = currentUser.email;
+      }
+    } catch(e) {
+      creatorName = currentUser.email;
+      creatorEmail = currentUser.email;
+    }
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
+  const green = [46, 204, 113];
+  const dark = [44, 62, 80];
+  const light = [245, 247, 250];
+  const gray = [120, 130, 140];
+  const white = [255,255,255];
+
+  // ── HEADER BAR ──
+  doc.setFillColor(...dark);
+  doc.rect(0, 0, W, 22, 'F');
+  doc.setFillColor(...green);
+  doc.rect(0, 22, W, 3, 'F');
+
+  // Logo text in header
+  doc.setTextColor(...white);
+  doc.setFontSize(13);
+  doc.setFont('helvetica','bold');
+  doc.text('Inmuebles', 14, 14);
+  doc.setTextColor(...green);
+  doc.text('Hoy', 14 + doc.getTextWidth('Inmuebles') + 1, 14);
+  doc.setTextColor(...white);
+  doc.setFontSize(7);
+  doc.setFont('helvetica','normal');
+  doc.text('REALTY', 14, 19);
+
+  // Right side of header: creator contact
+  doc.setFontSize(7.5);
+  doc.setTextColor(180,200,180);
+  doc.text('FICHA DE PROPIEDAD', W - 14, 8, { align:'right' });
+  doc.setTextColor(...white);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.text(creatorName, W - 14, 14, { align:'right' });
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...green);
+  doc.text(creatorPhone + '  |  ' + creatorEmail, W - 14, 19, { align:'right' });
+
+  // ── PROPERTY TITLE BLOCK ──
+  doc.setFillColor(...light);
+  doc.rect(0, 25, W, 28, 'F');
+
+  const typeLabel = p.type==='renta' ? 'EN RENTA' : p.type==='desarrollo' ? 'PREVENTA' : 'EN VENTA';
+  doc.setFillColor(...green);
+  doc.roundedRect(14, 28, 28, 7, 2, 2, 'F');
+  doc.setTextColor(...white);
+  doc.setFontSize(7);
+  doc.setFont('helvetica','bold');
+  doc.text(typeLabel, 14 + 14, 32.8, { align:'center' });
+
+  doc.setTextColor(...dark);
+  doc.setFontSize(15);
+  doc.setFont('helvetica','bold');
+  const titleLines = doc.splitTextToSize(p.title, 160);
+  doc.text(titleLines, 14, 41);
+
+  doc.setTextColor(...gray);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('📍 ' + (p.address || ((p.zone ? p.zone + ', ' : '') + (p.city || ''))), 14, 49);
+
+  // ── PRICE ──
+  doc.setTextColor(...green);
+  doc.setFontSize(20);
+  doc.setFont('helvetica','bold');
+  doc.text(p.price + ' ' + (p.currency||'MXN'), 14, 63);
+
+  // ── IMAGES COLLAGE ──
+  let imageBottom = 66;
+  if (p.photos && p.photos.length > 0) {
+    const maxPhotos = Math.min(p.photos.length, 4);
+    if (maxPhotos === 1) {
+      try {
+        const imgData = await urlToBase64(p.photos[0]);
+        doc.addImage(imgData, 'JPEG', 14, 67, 182, 70);
+        imageBottom = 140;
+      } catch(e) { imageBottom = 66; }
+    } else if (maxPhotos === 2) {
+      for (let i = 0; i < 2; i++) {
+        try {
+          const imgData = await urlToBase64(p.photos[i]);
+          doc.addImage(imgData, 'JPEG', 14 + i*92, 67, 89, 60);
+        } catch(e) {}
+      }
+      imageBottom = 130;
+    } else if (maxPhotos >= 3) {
+      // Main big photo left, two small right
+      try {
+        const img0 = await urlToBase64(p.photos[0]);
+        doc.addImage(img0, 'JPEG', 14, 67, 116, 72);
+      } catch(e) {}
+      for (let i = 1; i < Math.min(maxPhotos, 3); i++) {
+        try {
+          const imgD = await urlToBase64(p.photos[i]);
+          doc.addImage(imgD, 'JPEG', 134, 67 + (i-1)*36, 62, 34);
+        } catch(e) {}
+      }
+      imageBottom = 142;
+    }
+    // Thin green border around image area
+    doc.setDrawColor(...green);
+    doc.setLineWidth(0.3);
+    doc.rect(14, 67, 182, imageBottom - 67);
+  }
+
+  // ── CHARACTERISTICS ──
+  const charY = imageBottom + 8;
+  doc.setFillColor(...dark);
+  doc.rect(14, charY, 182, 8, 'F');
+  doc.setTextColor(...white);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  doc.text('CARACTERÍSTICAS', 18, charY + 5.5);
+
+  const chars = [
+    { label: 'Recámaras', value: String(p.beds || 0) },
+    { label: 'Baños', value: String(p.baths || 0) },
+    { label: 'Constr.', value: (p.sqm || 0) + 'm²' },
+    { label: 'Terreno', value: p.sqmLand ? (p.sqmLand + 'm²') : 'N/A' },
+    { label: 'Estac.', value: String(p.parking || 0) },
+    { label: 'Categoría', value: p.cat || '—' },
+  ];
+
+  const boxW = 28, boxH = 18, startX = 14, boxY = charY + 10;
+  chars.forEach((c, i) => {
+    const x = startX + i * (boxW + 3.5);
+    doc.setFillColor(...light);
+    doc.roundedRect(x, boxY, boxW, boxH, 2, 2, 'F');
+    doc.setDrawColor(220, 225, 230);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(x, boxY, boxW, boxH, 2, 2, 'S');
+    doc.setTextColor(...green);
+    doc.setFontSize(13);
+    doc.setFont('helvetica','bold');
+    doc.text(c.value, x + boxW/2, boxY + 9, { align:'center' });
+    doc.setTextColor(...gray);
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica','normal');
+    doc.text(c.label, x + boxW/2, boxY + 15, { align:'center' });
+  });
+
+  // ── DESCRIPTION ──
+  let descY = boxY + boxH + 10;
+  if (p.desc) {
+    doc.setFillColor(...dark);
+    doc.rect(14, descY, 182, 8, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','bold');
+    doc.text('DESCRIPCIÓN', 18, descY + 5.5);
+    descY += 10;
+    doc.setTextColor(60, 70, 80);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    const descLines = doc.splitTextToSize(p.desc, 178);
+    doc.text(descLines, 15, descY + 4);
+    descY += descLines.length * 5 + 8;
+  }
+
+  // ── CONTACT / CREATOR CARD ──
+  const contactY = Math.max(descY + 4, H - 55);
+  doc.setFillColor(...green);
+  doc.rect(0, contactY, W, 1, 'F');
+  doc.setFillColor(...dark);
+  doc.rect(0, contactY + 1, W, 44, 'F');
+
+  doc.setTextColor(...white);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.text('¿Te interesa esta propiedad?', 14, contactY + 12);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(180,210,190);
+  doc.text('Contáctame directamente:', 14, contactY + 19);
+
+  // Creator info
+  doc.setTextColor(...white);
+  doc.setFontSize(12);
+  doc.setFont('helvetica','bold');
+  doc.text(creatorName, 14, contactY + 28);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(...green);
+  doc.text('📧 ' + creatorEmail, 14, contactY + 34);
+  doc.text('📱 ' + creatorPhone, 14, contactY + 40);
+
+  // WhatsApp CTA box
+  doc.setFillColor(...green);
+  doc.roundedRect(130, contactY + 8, 66, 28, 3, 3, 'F');
+  doc.setTextColor(...white);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  doc.text('ESCRÍBEME POR', 163, contactY + 17, { align:'center' });
+  doc.setFontSize(13);
+  doc.text('WhatsApp', 163, contactY + 25, { align:'center' });
+  doc.setFontSize(8);
+  doc.setFont('helvetica','normal');
+  doc.text(creatorPhone, 163, contactY + 31, { align:'center' });
+
+  // ── FOOTER ──
+  doc.setFillColor(30, 42, 54);
+  doc.rect(0, H - 10, W, 10, 'F');
+  doc.setTextColor(100, 120, 100);
+  doc.setFontSize(7);
+  doc.setFont('helvetica','normal');
+  doc.text('InmuebleHoy Realty · inmuebleshoy.com · Ficha generada el ' + new Date().toLocaleDateString('es-MX'), W/2, H - 4, { align:'center' });
+
+  // Save
+  const safeName = (p.title || 'propiedad').replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  doc.save(`ficha_${safeName}.pdf`);
+  showToast('✅ Ficha PDF descargada', 'ok');
+}
+
+async function urlToBase64(url) {
+  // If already base64/data URL, return directly
+  if (url.startsWith('data:')) return url;
+  // Fetch via canvas to avoid CORS issues
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ── LIGHTBOX ──
+let _lboxPhotos = [], _lboxIdx = 0;
+function openLbox(photos, idx) {
+  _lboxPhotos = photos; _lboxIdx = idx;
+  document.getElementById('lbox-img').src = photos[idx];
+  document.getElementById('lbox-counter').textContent = (idx+1) + ' / ' + photos.length;
+  document.getElementById('lbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLbox() {
+  document.getElementById('lbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function lboxNav(dir) {
+  _lboxIdx = (_lboxIdx + dir + _lboxPhotos.length) % _lboxPhotos.length;
+  document.getElementById('lbox-img').src = _lboxPhotos[_lboxIdx];
+  document.getElementById('lbox-counter').textContent = (_lboxIdx+1) + ' / ' + _lboxPhotos.length;
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lbox').classList.contains('open')) return;
+  if (e.key === 'ArrowLeft') lboxNav(-1);
+  if (e.key === 'ArrowRight') lboxNav(1);
+  if (e.key === 'Escape') closeLbox();
+});
+
+// ── BOOT ──
+initApp();
+</script>
+<!-- LIGHTBOX -->
+<div id="lbox" class="lbox" onclick="if(event.target===this)closeLbox()">
+  <button class="lbox-close" onclick="closeLbox()">×</button>
+  <button class="lbox-prev" onclick="lboxNav(-1)">&#8249;</button>
+  <img id="lbox-img" src="" alt="">
+  <button class="lbox-next" onclick="lboxNav(1)">&#8250;</button>
+  <div class="lbox-counter" id="lbox-counter"></div>
+</div>
+</body>
+</html>
