@@ -1107,7 +1107,7 @@ function sendContact() {
   if (_agWaPhoto) lines += '\nFoto: ' + _agWaPhoto;
   lines += '\n\nMi contacto: ' + tel;
   lines += '\n\n' + msg;
-  var url = 'https://api.whatsapp.com/send?phone=' + _agWaPhone + '&text=' + encodeURIComponent(lines);
+  var url = 'https://web.whatsapp.com/send?phone=' + _agWaPhone + '&text=' + encodeURIComponent(lines);
   window.open(url, '_blank');
   var ok = document.getElementById('ag-ok');
   ok.textContent = '✅ WhatsApp abierto — envía tu mensaje al agente';
