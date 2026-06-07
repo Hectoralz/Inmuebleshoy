@@ -881,7 +881,7 @@ function renderAgents(ags) {
         <div class="ast"><strong>${a.props||0}</strong>propiedades</div>
         <div class="ast"><strong>${a.years||0}</strong>años exp.</div>
       </div>
-      <button class="bct" onclick="openAgentContact('${escAttr(a.name)}','${escAttr(a.phone||'')}')"  >Contactar agente</button>
+      <button class="bct" onclick="openAgentContact('${escAttr(a.name)}','${escAttr(a.phone||'')}','','')" >Contactar agente</button>
     </div>`;
   }).join('');
 }
@@ -1072,7 +1072,10 @@ function toggleFav(evt, id) {
 var _agWaPhone = '', _agWaProp = '', _agWaName = '', _agWaPhoto = '';
 function openAgentContact(name, phone, propTitle, photoUrl) {
   _agWaName = name || 'Agente InmuebleHoy';
-  _agWaPhone = ((phone || '').replace(/[^0-9]/g, '')) || '524921412672';
+  var cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+  // Add Mexico country code if not present
+  if (cleanPhone && cleanPhone.length === 10) cleanPhone = '52' + cleanPhone;
+  _agWaPhone = cleanPhone || '524921412672';
   _agWaProp = propTitle || '';
   _agWaPhoto = photoUrl || '';
   document.getElementById('ag-title').textContent = 'Contactar a ' + _agWaName;
