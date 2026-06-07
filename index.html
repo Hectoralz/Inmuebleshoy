@@ -1072,10 +1072,12 @@ function toggleFav(evt, id) {
 var _agWaPhone = '', _agWaProp = '', _agWaName = '', _agWaPhoto = '';
 function openAgentContact(name, phone, propTitle, photoUrl) {
   _agWaName = name || 'Agente InmuebleHoy';
-  var cleanPhone = (phone || '').replace(/[^0-9]/g, '');
-  // Add Mexico country code if not present
-  if (cleanPhone && cleanPhone.length === 10) cleanPhone = '52' + cleanPhone;
-  _agWaPhone = cleanPhone || '524921412672';
+  var cleanPhone = (phone || '').replace(/[^0-9+\s\-]/g, '').replace(/[^0-9]/g, '');
+  if (cleanPhone.length === 10) cleanPhone = '52' + cleanPhone;
+  else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) { /* ok */ }
+  else if (cleanPhone.length === 13 && cleanPhone.startsWith('521')) cleanPhone = '52' + cleanPhone.slice(3);
+  if (!cleanPhone || cleanPhone.length < 10) cleanPhone = '524921412672';
+  _agWaPhone = cleanPhone;
   _agWaProp = propTitle || '';
   _agWaPhoto = photoUrl || '';
   document.getElementById('ag-title').textContent = 'Contactar a ' + _agWaName;
@@ -1105,7 +1107,7 @@ function sendContact() {
   if (_agWaPhoto) lines += '\nFoto: ' + _agWaPhoto;
   lines += '\n\nMi contacto: ' + tel;
   lines += '\n\n' + msg;
-  var url = 'https://wa.me/' + _agWaPhone + '?text=' + encodeURIComponent(lines);
+  var url = 'https://api.whatsapp.com/send?phone=' + _agWaPhone + '&text=' + encodeURIComponent(lines);
   window.open(url, '_blank');
   var ok = document.getElementById('ag-ok');
   ok.textContent = '✅ WhatsApp abierto — envía tu mensaje al agente';
