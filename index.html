@@ -1217,15 +1217,20 @@ function loadAllAdminData() {
   loadAgentSelect();
 }
 
+let _adminPropsCallback = null;
 function loadPropsList() {
   const el = document.getElementById('adm-props-list');
-  if (!db) { el.innerHTML = `<p class="merr">Firebase no configurado. Sigue las instrucciones en el código.</p>`; return; }
-  try { db.ref('properties').off('value'); } catch(e){}
-  db.ref('properties').on('value', snap => {
+  if (!el || !db) return;
+  // Remove previous admin listener only
+  if (_adminPropsCallback) { db.ref('properties').off('value', _adminPropsCallback); }
+  el.innerHTML = '<div class="spin"></div>';
+  _adminPropsCallback = db.ref('properties').on('value', snap => {
+    const el2 = document.getElementById('adm-props-list');
+    if (!el2) return;
     const props = [];
-    snap.forEach(c => props.push({ id: c.key, ...c.val() }));
-    if (!props.length) { el.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>'; return; }
-    el.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
+    snap.forEach(c => { if(c.val() && c.val().title) props.push({ id: c.key, ...c.val() }); });
+    if (!props.length) { el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>'; return; }
+    el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
       <thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead>
       <tbody>${props.map(p => `<tr>
         <td style="font-weight:600">${escHtml(p.title)}</td>
@@ -1246,7 +1251,7 @@ function loadAgentsList() {
     const ags = [];
     snap.forEach(c => ags.push({ id: c.key, ...c.val() }));
     if (!ags.length) { el.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay agentes registrados aún.</p>'; return; }
-    el.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
+    el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
       <thead><tr><th>Nombre</th><th>Correo</th><th>Zona</th><th>Propiedades</th><th>Acciones</th></tr></thead>
       <tbody>${ags.map(a => `<tr>
         <td style="font-weight:600">${escHtml(a.name)}</td>
