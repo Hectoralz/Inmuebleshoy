@@ -1066,11 +1066,11 @@ function toggleFav(evt, id) {
 var _agWaPhone = '', _agWaProp = '', _agWaName = '', _agWaPhoto = '';
 function openAgentContact(name, phone, propTitle, photoUrl) {
   _agWaName = name || 'Agente InmuebleHoy';
-  var cleanPhone = (phone || '').replace(/[^0-9+\s\-]/g, '').replace(/[^0-9]/g, '');
-  if (cleanPhone.length === 10) cleanPhone = '52' + cleanPhone;
-  else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) { /* ok */ }
-  else if (cleanPhone.length === 13 && cleanPhone.startsWith('521')) cleanPhone = '52' + cleanPhone.slice(3);
-  if (!cleanPhone || cleanPhone.length < 10) cleanPhone = '524921412672';
+  var cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+  // Mexico mobile: wa.me needs 521 + 10 digits
+  if (cleanPhone.length === 10) cleanPhone = '521' + cleanPhone;
+  else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) cleanPhone = '521' + cleanPhone.slice(2);
+  if (!cleanPhone || cleanPhone.length < 10) cleanPhone = '5214921412672';
   _agWaPhone = cleanPhone;
   _agWaProp = propTitle || '';
   _agWaPhoto = photoUrl || '';
