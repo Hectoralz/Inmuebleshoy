@@ -1217,19 +1217,18 @@ function loadAllAdminData() {
   loadAgentSelect();
 }
 
-let _adminPropsCallback = null;
 function loadPropsList() {
   const el = document.getElementById('adm-props-list');
-  if (!el || !db) return;
-  // Remove previous admin listener only
-  if (_adminPropsCallback) { db.ref('properties').off('value', _adminPropsCallback); }
-  el.innerHTML = '<div class="spin"></div>';
-  _adminPropsCallback = db.ref('properties').on('value', snap => {
+  if (!el) return;
+  // Use allProps which is already loaded by loadPublicData's realtime listener
+  function renderAdminProps() {
     const el2 = document.getElementById('adm-props-list');
     if (!el2) return;
-    const props = [];
-    snap.forEach(c => { if(c.val() && c.val().title) props.push({ id: c.key, ...c.val() }); });
-    if (!props.length) { el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>'; return; }
+    const props = allProps && allProps.length ? allProps : [];
+    if (!props.length) {
+      el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
+      return;
+    }
     el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
       <thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead>
       <tbody>${props.map(p => `<tr>
@@ -1241,7 +1240,25 @@ function loadPropsList() {
         <td><button class="bedi" onclick="editProp('${escAttr(p.id)}')">Editar</button>${currentRole==='admin'?`<button class="bdel" onclick="deleteProp('${escAttr(p.id)}','${escAttr(p.title)}')">Eliminar</button>`:''}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
-  });
+  }
+  // If allProps already loaded, render immediately
+  if (allProps && allProps.length) {
+    renderAdminProps();
+  } else {
+    el.innerHTML = '<div class="spin"></div>';
+  }
+  // Also set up a watcher so if allProps updates, panel updates too
+  if (!window._adminPropsWatcher && db) {
+    window._adminPropsWatcher = true;
+    db.ref('properties').on('value', snap => {
+      allProps = [];
+      snap.forEach(c => { const v = c.val(); if(v && v.title) allProps.push({ id: c.key, ...v }); });
+      renderGrids();
+      if (document.getElementById('admp') && document.getElementById('admp').classList.contains('open')) {
+        renderAdminProps();
+      }
+    });
+  }
 }
 
 function loadAgentsList() {
