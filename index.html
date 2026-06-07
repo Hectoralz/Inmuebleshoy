@@ -1098,7 +1098,8 @@ function sendContact() {
   if (!name || !tel) { showToast('Por favor llena tu nombre y teléfono', 'err'); return; }
   var msg = document.getElementById('c-msg').value.trim() || 'Hola, me interesa esta propiedad.';
   var lines = 'Hola, soy *' + name + '*';
-  if (_agWaProp) lines += '\n\nPropiedad de interés: *' + _agWaProp + '*';
+  if (_agWaProp) lines += '\n\nPropiedad: *' + _agWaProp + '*';
+  if (_agWaPhoto) lines += '\nFoto: ' + _agWaPhoto;
   lines += '\n\nMi contacto: ' + tel;
   lines += '\n\n' + msg;
   var url = 'https://wa.me/' + _agWaPhone + '?text=' + encodeURIComponent(lines);
