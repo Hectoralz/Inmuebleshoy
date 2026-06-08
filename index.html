@@ -1087,8 +1087,8 @@ function openAgentContact(name, phone, propTitle, photoUrl) {
   if (cleanPhone.length === 10) cleanPhone = '521' + cleanPhone;
   else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) cleanPhone = '521' + cleanPhone.slice(2);
   if (!cleanPhone || cleanPhone.length < 10) {
-    showToast('Este agente no tiene número de WhatsApp registrado', 'err');
-    return;
+    // No agent phone — fallback to agency number
+    cleanPhone = '5214921412672';
   }
   _agWaPhone = cleanPhone;
   _agWaProp = propTitle || '';
@@ -1122,8 +1122,7 @@ function sendContact() {
   if (_agWaProp) lines += '*Propiedad:* ' + _agWaProp + nl;
   if (_agWaPhoto && _agWaPhoto.startsWith('http')) lines += '*Foto:* ' + _agWaPhoto + nl;
   if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '*Mensaje:* ' + msg;
-  var phone = _agWaPhone;
-  if (!phone) { showToast('Este agente no tiene número registrado', 'err'); return; }
+  var phone = _agWaPhone || '5214921412672';
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
   CM('magent');
   showContactSuccess(name, _agWaName);
@@ -1469,34 +1468,38 @@ async function saveProp() {
   const price = document.getElementById('pf-price').value.trim();
   const city  = document.getElementById('pf-city').value.trim();
   const msgEl = document.getElementById('prop-form-msg');
-  if (!title || !price || !city) {
-    msgEl.innerHTML = `<div class="merr">Por favor completa Título, Precio y Ciudad.</div>`;
+  if (!title || !price) {
+    msgEl.innerHTML = `<div class="merr">Por favor completa Título y Precio.</div>`;
+    return;
+  }
+  if (!city) {
+    msgEl.innerHTML = `<div class="merr">Selecciona o escribe la Ciudad.</div>`;
     return;
   }
   msgEl.innerHTML = '';
   const btn = document.getElementById('btn-saveprop');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Guardando…';
-  const photos = await uploadPendingPhotos();
-  const data = {
-    title, price, city,
-    zone: document.getElementById('pf-zone').value.trim(),
-    address: document.getElementById('pf-address').value.trim(),
-    type: document.getElementById('pf-type').value,
-    cat:  document.getElementById('pf-cat').value,
-    currency: document.getElementById('pf-cur').value,
-    beds:  parseInt(document.getElementById('pf-beds').value) || 0,
-    baths: parseInt(document.getElementById('pf-baths').value) || 0,
-    sqm:   parseInt(document.getElementById('pf-sqm').value) || 0,
-    sqmt:  parseInt(document.getElementById('pf-sqmt').value) || 0,
-    parking: parseInt(document.getElementById('pf-parking').value) || 0,
-    desc:  document.getElementById('pf-desc').value.trim(),
-    photos,
-    agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : (currentUser ? currentUser.uid : ''),
-    updatedAt: Date.now(),
-  };
   try {
-    if (!db) throw new Error('Firebase no configurado. Agrega tus credenciales en la sección de configuración del código.');
+    const photos = await uploadPendingPhotos();
+    const data = {
+      title, price, city,
+      zone: document.getElementById('pf-zone').value.trim(),
+      address: document.getElementById('pf-address').value.trim(),
+      type: document.getElementById('pf-type').value,
+      cat:  document.getElementById('pf-cat').value,
+      currency: document.getElementById('pf-cur').value,
+      beds:  parseInt(document.getElementById('pf-beds').value) || 0,
+      baths: parseInt(document.getElementById('pf-baths').value) || 0,
+      sqm:   parseInt(document.getElementById('pf-sqm').value) || 0,
+      sqmt:  parseInt(document.getElementById('pf-sqmt').value) || 0,
+      parking: parseInt(document.getElementById('pf-parking').value) || 0,
+      desc:  document.getElementById('pf-desc').value.trim(),
+      photos,
+      agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : (currentUser ? currentUser.uid : ''),
+      updatedAt: Date.now(),
+    };
+    if (!db) throw new Error('Firebase no configurado.');
     const _was = editingPropId;
     if (_was) {
       await db.ref('properties/' + _was).update(data);
@@ -1508,9 +1511,9 @@ async function saveProp() {
     showSaveSuccess(title, _was ? 'actualizada' : 'publicada');
   } catch(e) {
     msgEl.innerHTML = `<div class="merr">Error: ${escHtml(e.message)}</div>`;
+    btn.disabled = false;
+    btn.textContent = editingPropId ? '💾 Actualizar propiedad' : '💾 Publicar propiedad';
   }
-  btn.disabled = false;
-  btn.disabled = false; btn.textContent = '💾 Publicar propiedad';
 }
 
 // ── SAVE AGENT ──
