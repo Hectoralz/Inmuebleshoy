@@ -1702,236 +1702,97 @@ async function fetchImageAsDataURL(url) {
 }
 async function exportPropPDF(prop) {
   if (!prop) return;
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    showToast('Cargando PDF...', '');
-    var scr = document.createElement('script');
-    scr.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    scr.onload = function(){ exportPropPDF(prop); };
-    document.head.appendChild(scr);
-    return;
-  }
   showToast('Generando PDF...', '');
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const W=210, H=297, M=15;
 
-    // Colors
-    const C_DARK=[22,31,38], C_GREEN=[39,174,96], C_WHITE=[255,255,255];
-    const C_LIGHT=[246,248,250], C_GRAY=[100,110,120], C_BORDER=[220,224,230];
-    const C_ACCENT=[39,174,96];
+  // Build a clean HTML template
+  var typeLabel = prop.type==='renta'?'EN RENTA':prop.type==='desarrollo'?'PREVENTA':'EN VENTA';
+  var typeColor = prop.type==='renta'?'#2471a3':prop.type==='desarrollo'?'#d35400':'#27ae60';
 
-    // Agent info
-    var agName = 'InmuebleHoy Realty';
-    var agEmail = 'info@inmuebleshoy.com';
-    var agPhone = '4921412672';
-    if (typeof currentUser !== 'undefined' && currentUser) {
-      agName = currentUser.displayName || currentUser.email.split('@')[0];
-      agEmail = currentUser.email;
-    }
-
-    // ── HEADER: full dark band ──────────────────────────────────
-    doc.setFillColor(...C_DARK);
-    doc.rect(0, 0, W, 40, 'F');
-
-    // Green left accent bar
-    doc.setFillColor(...C_GREEN);
-    doc.rect(0, 0, 4, 40, 'F');
-
-    // Logo
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(22);
-    doc.setTextColor(...C_GREEN);
-    doc.text('Inmuebles', 12, 16);
-    const lw = doc.getTextWidth('Inmuebles');
-    doc.setTextColor(...C_WHITE);
-    doc.text('Hoy', 12 + lw + 1, 16);
-
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7);
-    doc.setTextColor(130,160,140);
-    doc.text('REALTY · ZACATECAS, MEXICO', 12, 22);
-
-    // Divider line in header
-    doc.setDrawColor(50,65,75);
-    doc.setLineWidth(0.3);
-    doc.line(12, 26, W-12, 26);
-
-    // Agent box (right side of header)
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(6);
-    doc.setTextColor(100,200,130);
-    doc.text('AGENTE RESPONSABLE', W-12, 30, {align:'right'});
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(9);
-    doc.setTextColor(...C_WHITE);
-    doc.text(agName, W-12, 35, {align:'right'});
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7);
-    doc.setTextColor(160,200,170);
-    doc.text(agEmail + '  |  Tel: ' + agPhone, W-12, 39, {align:'right'});
-
-    let y = 50;
-
-    // ── TYPE BADGE ──────────────────────────────────────────────
-    const typeLabel = prop.type==='renta'?'EN RENTA':prop.type==='desarrollo'?'PREVENTA':'EN VENTA';
-    const typeClr = prop.type==='renta'?[41,128,185]:prop.type==='desarrollo'?[192,57,43]:C_GREEN;
-    doc.setFillColor(...typeClr);
-    doc.rect(M, y, 24, 5.5, 'F');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(6.5);
-    doc.setTextColor(...C_WHITE);
-    doc.text(typeLabel, M+12, y+4, {align:'center'});
-    y += 9;
-
-    // ── TITLE ───────────────────────────────────────────────────
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(18);
-    doc.setTextColor(...C_DARK);
-    const titleLines = doc.splitTextToSize(prop.title||'Propiedad', W-M*2);
-    doc.text(titleLines, M, y);
-    y += titleLines.length * 7.5;
-
-    // ── PRICE ───────────────────────────────────────────────────
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(22);
-    doc.setTextColor(...C_GREEN);
-    doc.text((prop.price||'') + ' ' + (prop.currency||'MXN'), M, y);
-    y += 9;
-
-    // ── LOCATION ────────────────────────────────────────────────
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...C_GRAY);
-    const locParts = [prop.city, prop.zone, prop.address].filter(Boolean);
-    if (locParts.length) { doc.text(locParts.join('  ·  '), M, y); y += 7; }
-
-    // ── DIVIDER ─────────────────────────────────────────────────
-    doc.setDrawColor(...C_BORDER);
-    doc.setLineWidth(0.3);
-    doc.line(M, y, W-M, y);
-    y += 8;
-
-    // ── SPECS GRID ──────────────────────────────────────────────
-    const specs = [
-      ['Recamaras', String(prop.beds||'—')],
-      ['Banos', String(prop.baths||'—')],
-      ['m2 Const.', prop.sqm ? String(prop.sqm)+' m2' : '—'],
-      ['m2 Terreno', prop.sqmt ? String(prop.sqmt)+' m2' : '—'],
-      ['Estacionamientos', String(prop.parking||'—')],
-      ['Categoria', String(prop.cat||'—')],
-    ];
-    const COLS = 3;
-    const cW = (W - M*2 - (COLS-1)*4) / COLS;
-    const cH = 15;
-    specs.forEach(function(s, i) {
-      const col = i % COLS, row = Math.floor(i / COLS);
-      const sx = M + col*(cW+4), sy = y + row*(cH+4);
-      // Card bg
-      doc.setFillColor(...C_LIGHT);
-      doc.rect(sx, sy, cW, cH, 'F');
-      // Left accent
-      doc.setFillColor(...C_GREEN);
-      doc.rect(sx, sy, 2, cH, 'F');
-      // Label
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(6.5);
-      doc.setTextColor(...C_GRAY);
-      doc.text(s[0], sx+5, sy+5.5);
-      // Value
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(11);
-      doc.setTextColor(...C_DARK);
-      doc.text(s[1], sx+5, sy+12);
-    });
-    y += Math.ceil(specs.length/COLS) * (cH+4) + 4;
-
-    // ── DESCRIPTION ─────────────────────────────────────────────
-    if (prop.desc && prop.desc.trim()) {
-      doc.setDrawColor(...C_BORDER);
-      doc.line(M, y, W-M, y);
-      y += 7;
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(10);
-      doc.setTextColor(...C_DARK);
-      doc.text('Descripcion', M, y);
-      y += 6;
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(8.5);
-      doc.setTextColor(...C_GRAY);
-      const dLines = doc.splitTextToSize(prop.desc, W-M*2);
-      doc.text(dLines.slice(0, 9), M, y);
-      y += Math.min(dLines.length, 9) * 4.5 + 6;
-    }
-
-    // ── PHOTOS ──────────────────────────────────────────────────
-    if (prop.photos && prop.photos.length > 0) {
-      if (y + 50 > H - 24) { doc.addPage(); y = 20; }
-      doc.setDrawColor(...C_BORDER);
-      doc.line(M, y, W-M, y);
-      y += 7;
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(10);
-      doc.setTextColor(...C_DARK);
-      doc.text('Fotografias', M, y);
-      y += 6;
-
-      const maxP = Math.min(prop.photos.length, 3);
-      const gap = 4;
-      const pW = (W - M*2 - gap*(maxP-1)) / maxP;
-      const pH = pW * 0.65;
-
-      if (y + pH > H - 24) { doc.addPage(); y = 20; }
-
-      for (var pi = 0; pi < maxP; pi++) {
-        try {
-          const imgData = await fetchImageAsDataURL(prop.photos[pi]);
-          if (imgData) {
-            const px = M + pi*(pW+gap);
-            doc.setFillColor(235,238,242);
-            doc.rect(px, y, pW, pH, 'F');
-            doc.addImage(imgData, 'JPEG', px, y, pW, pH, '', 'MEDIUM');
-            doc.setDrawColor(...C_BORDER);
-            doc.setLineWidth(0.2);
-            doc.rect(px, y, pW, pH, 'S');
-          }
-        } catch(e) {}
-      }
-      y += pH + 8;
-    }
-
-    // ── FOOTER ──────────────────────────────────────────────────
-    doc.setFillColor(...C_DARK);
-    doc.rect(0, H-16, W, 16, 'F');
-    doc.setFillColor(...C_GREEN);
-    doc.rect(0, H-16, 3, 16, 'F');
-
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(8);
-    doc.setTextColor(...C_WHITE);
-    doc.text('InmuebleHoy Realty', M, H-9);
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7);
-    doc.setTextColor(120,150,130);
-    doc.text('Zacatecas, Mexico · inmuebleshoy.com', M, H-4.5);
-
-    const today = new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});
-    doc.setTextColor(100,130,110);
-    doc.text(today, W-M, H-7, {align:'right'});
-    doc.setFont('helvetica','italic');
-    doc.setFontSize(6.5);
-    doc.text('Documento informativo, sujeto a cambios.', W-M, H-3, {align:'right'});
-
-    const fname = (prop.title||'propiedad').replace(/[^a-zA-Z0-9 ]/g,'_').trim().slice(0,40) + '.pdf';
-    doc.save(fname);
-    showToast('PDF descargado', 'ok');
-  } catch(e) {
-    console.error('PDF:', e);
-    showToast('Error PDF: ' + e.message, 'err');
+  var agName = 'InmuebleHoy Realty';
+  var agEmail = 'info@inmuebleshoy.com';
+  var agPhone = '492 141 2672';
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    agName = currentUser.displayName || currentUser.email.split('@')[0];
+    agEmail = currentUser.email;
   }
+
+  var photos = (prop.photos||[]).filter(function(p){ return p && p.startsWith('http'); }).slice(0,3);
+  var photosHtml = photos.length ? '<div style="display:flex;gap:8px;margin-top:12px">' +
+    photos.map(function(p){ return '<img src="'+p+'" style="flex:1;min-width:0;height:140px;object-fit:cover;border-radius:6px;border:1px solid #dce0e8">'; }).join('') +
+    '</div>' : '';
+
+  var specs = [
+    ['Recamaras', prop.beds||'—'],
+    ['Banos', prop.baths||'—'],
+    ['m² Const.', prop.sqm ? prop.sqm+' m²' : '—'],
+    ['m² Terreno', prop.sqmt ? prop.sqmt+' m²' : '—'],
+    ['Estacionamientos', prop.parking||'—'],
+    ['Categoria', prop.cat||'—'],
+  ];
+
+  var specsHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0">' +
+    specs.map(function(s){ return '<div style="background:#f4f6f8;border-radius:6px;padding:10px 12px;border-left:3px solid #27ae60">' +
+      '<div style="font-size:10px;color:#5f6368;margin-bottom:4px">'+s[0]+'</div>' +
+      '<div style="font-size:16px;font-weight:700;color:#1a2433">'+s[1]+'</div>' +
+    '</div>'; }).join('') + '</div>';
+
+  var loc = [prop.city, prop.zone, prop.address].filter(Boolean).join(' · ');
+  var desc = prop.desc ? '<div style="margin:16px 0"><div style="font-size:13px;font-weight:700;color:#1a2433;margin-bottom:6px">Descripcion</div><div style="font-size:12px;color:#5f6368;line-height:1.6">'+escHtml(prop.desc)+'</div></div>' : '';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1a2433;background:#fff}</style>'+
+    '</head><body>'+
+    // Header
+    '<div style="background:#1a2433;padding:20px 24px;display:flex;justify-content:space-between;align-items:center">'+
+      '<div>'+
+        '<div style="font-size:22px;font-weight:700"><span style="color:#27ae60">Inmuebles</span><span style="color:#fff">Hoy</span></div>'+
+        '<div style="color:#8aab90;font-size:9px;margin-top:2px;letter-spacing:1px">REALTY · ZACATECAS, MEXICO</div>'+
+      '</div>'+
+      '<div style="border:1px solid #3a5a42;padding:10px 14px;min-width:180px">'+
+        '<div style="color:#7ab87a;font-size:9px;font-weight:700;margin-bottom:4px">AGENTE RESPONSABLE</div>'+
+        '<div style="color:#fff;font-size:11px;font-weight:700;margin-bottom:3px">'+escHtml(agName)+'</div>'+
+        '<div style="color:#27ae60;font-size:10px;margin-bottom:2px">Tel: '+escHtml(agPhone)+'</div>'+
+        '<div style="color:#a0c8a0;font-size:9px">'+escHtml(agEmail)+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="width:100%;height:4px;background:#27ae60"></div>'+
+    // Content
+    '<div style="padding:24px">'+
+      '<span style="background:'+typeColor+';color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:3px;letter-spacing:.5px">'+typeLabel+'</span>'+
+      '<div style="font-size:22px;font-weight:700;color:#1a2433;margin:12px 0 4px">'+escHtml(prop.title||'')+'</div>'+
+      '<div style="font-size:26px;font-weight:700;color:#1a7a42;margin-bottom:6px">'+escHtml(prop.price||'')+' <span style="font-size:14px;color:#5f6368">'+escHtml(prop.currency||'MXN')+'</span></div>'+
+      '<div style="font-size:11px;color:#5f6368;margin-bottom:4px">'+escHtml(loc)+'</div>'+
+      '<hr style="border:none;border-top:1px solid #dce0e8;margin:16px 0">'+
+      specsHtml +
+      desc +
+      (photosHtml ? '<hr style="border:none;border-top:1px solid #dce0e8;margin:16px 0"><div style="font-size:13px;font-weight:700;color:#1a2433;margin-bottom:8px">Fotografias</div>'+photosHtml : '')+
+    '</div>'+
+    // Footer
+    '<div style="background:#1a2433;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;margin-top:auto">'+
+      '<div style="border-left:3px solid #27ae60;padding-left:10px">'+
+        '<div style="color:#fff;font-size:10px;font-weight:700">InmuebleHoy Realty</div>'+
+        '<div style="color:#8aab90;font-size:9px">Zacatecas, Mexico · inmuebleshoy.com</div>'+
+      '</div>'+
+      '<div style="color:#6a8a6a;font-size:9px;text-align:right">'+
+        '<div>'+new Date().toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'})+'</div>'+
+        '<div style="font-style:italic">Documento informativo, sujeto a cambios.</div>'+
+      '</div>'+
+    '</div>'+
+    '</body></html>';
+
+  // Open print window with the HTML
+  var win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) { showToast('Permite ventanas emergentes para generar el PDF', 'err'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(function() {
+    win.print();
+    showToast('Usa "Guardar como PDF" en el dialogo de impresion', 'ok');
+  }, 800);
 }
 
-// ── BOOT ── v2
+// ── BOOT ── v3
 initApp();
 </script>
 </body>
