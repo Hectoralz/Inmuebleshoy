@@ -1097,26 +1097,20 @@ function openAgentContact(name, phone, propTitle, photoUrl) {
 function sendContact() {
   var name = document.getElementById('c-name').value.trim();
   var tel  = document.getElementById('c-tel').value.trim();
-  if (!name || !tel) { showToast('Por favor llena tu nombre y teléfono', 'err'); return; }
+  if (!name || !tel) { showToast('Por favor llena tu nombre y telefono', 'err'); return; }
   var msg = document.getElementById('c-msg').value.trim() || 'Hola, me interesa esta propiedad.';
-  var lines = 'Hola, tengo un cliente interesado.';
-  lines += '
-
-*Cliente:* ' + name;
-  lines += '
-*Teléfono:* ' + tel;
-  if (_agWaProp) lines += '
-*Propiedad:* ' + _agWaProp;
-  if (_agWaPhoto) lines += '
-*Foto:* ' + _agWaPhoto;
-  if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '
-*Mensaje:* ' + msg;
+  var nl = '\n';
+  var lines = 'Hola, tengo un cliente interesado.' + nl + nl;
+  lines += '*Cliente:* ' + name + nl;
+  lines += '*Telefono:* ' + tel + nl;
+  if (_agWaProp) lines += '*Propiedad:* ' + _agWaProp + nl;
+  if (_agWaPhoto) lines += '*Foto:* ' + _agWaPhoto + nl;
+  if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '*Mensaje:* ' + msg;
   var phone = _agWaPhone || '5214921412672';
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
   CM('magent');
   showContactSuccess(name, _agWaName);
 }
-
 function showContactSuccess(clientName, agentName) {
   var d = document.createElement('div');
   d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn .3s';
