@@ -1716,7 +1716,7 @@ async function exportPropPDF(prop) {
     agEmail = currentUser.email;
   }
 
-  var photos = (prop.photos||[]).filter(function(p){ return p && p.startsWith('http'); }).slice(0,3);
+  var photos = (prop.photos||[]).filter(function(p){ return p && (p.startsWith('http') || p.startsWith('data:')); }).slice(0,3);
   var photosHtml = photos.length ? '<div style="display:flex;gap:8px;margin-top:12px">' +
     photos.map(function(p){ return '<img src="'+p+'" style="flex:1;min-width:0;height:140px;object-fit:cover;border-radius:6px;border:1px solid #dce0e8">'; }).join('') +
     '</div>' : '';
