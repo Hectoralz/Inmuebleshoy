@@ -1314,6 +1314,14 @@ function showAT(id, btn) {
   if (id === 'at-props') loadPropsList();
   if (id === 'at-agents') loadAgentsList();
   if (id === 'at-addprop') {
+    // If navigating to publish tab (not via editProp), reset edit mode
+    if (!window._editingViaButton) {
+      editingPropId = null;
+      document.getElementById('btn-saveprop').textContent = '💾 Publicar propiedad';
+      document.getElementById('btn-canceledit').style.display = 'none';
+      document.getElementById('prop-form-title').textContent = 'Publicar nueva propiedad';
+    }
+    window._editingViaButton = false;
     // Only load agent select if it has no options yet (avoid resetting user's selection)
     var sel = document.getElementById('pf-agent');
     if (sel && sel.options.length <= 1) loadAgentSelect();
@@ -1428,6 +1436,7 @@ function editProp(id) {
     }
     renderPhotoPreviews();
     // Go to publish tab using showAT so visibility is handled correctly
+    window._editingViaButton = true;
     var tabs = document.querySelectorAll('.atab');
     var pubTab = null;
     tabs.forEach(function(t){ if(t.getAttribute('onclick') && t.getAttribute('onclick').indexOf('at-addprop') > -1) pubTab = t; });
