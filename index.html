@@ -1104,7 +1104,7 @@ function sendContact() {
   lines += '*Cliente:* ' + name + nl;
   lines += '*Telefono:* ' + tel + nl;
   if (_agWaProp) lines += '*Propiedad:* ' + _agWaProp + nl;
-  if (_agWaPhoto) lines += '*Foto:* ' + _agWaPhoto + nl;
+  if (_agWaPhoto && _agWaPhoto.startsWith('http')) lines += '*Foto:* ' + _agWaPhoto + nl;
   if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '*Mensaje:* ' + msg;
   var phone = _agWaPhone || '5214921412672';
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
