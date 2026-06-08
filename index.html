@@ -736,10 +736,12 @@ function updateNavForUser(user) {
     if (isAdmin(user.email)) {
       currentRole = 'admin';
       loginBtn.textContent = '⚙ Admin';
+      if(document.getElementById('admp').classList.contains('open')) updateAdminTabs();
       loginBtn.onclick = openAdmin;
     } else {
       currentRole = 'agent';
       loginBtn.textContent = '➕ Publicar';
+      if(document.getElementById('admp').classList.contains('open')) updateAdminTabs();
       loginBtn.onclick = openAgentPublish;
     }
     if (logoutBtn) logoutBtn.style.display = '';
@@ -1237,6 +1239,7 @@ function openAgentPublish() {
   document.getElementById('adm-email').textContent = currentUser.email + ' (Agente)';
   document.getElementById('admp').classList.add('open');
   document.body.style.overflow = 'hidden';
+  setTimeout(updateAdminTabs, 300);
   // Force to publish-only tab and hide admin-only tabs
   showAT('at-addprop', document.querySelectorAll('.atab')[2]);
   // Hide admin-only tabs for agents
@@ -1247,17 +1250,23 @@ function openAgentPublish() {
   document.querySelector('.adnav h3').textContent = 'Publicar Propiedad — InmuebleHoy';
 }
 
+function updateAdminTabs() {
+  var isAdmin = currentRole === 'admin';
+  document.querySelectorAll('.adm-only').forEach(function(el){
+    el.style.display = isAdmin ? '' : 'none';
+  });
+  // Update header label
+  var emailEl = document.getElementById('adm-email');
+  if (emailEl && currentUser) {
+    emailEl.textContent = currentUser.email + (isAdmin ? ' (Admin)' : ' (Agente)');
+  }
+}
 function openAdmin() {
-  // Show/hide admin-only tabs based on role
-  setTimeout(function(){
-    document.querySelectorAll('.adm-only').forEach(function(el){
-      el.style.display = currentRole === 'admin' ? '' : 'none';
-    });
-  }, 100);
   if (!currentUser) { OM('mlogin'); return; }
-  document.getElementById('adm-email').textContent = currentUser.email + ' (Admin)';
+  document.getElementById('adm-email').textContent = currentUser.email + (currentRole === 'admin' ? ' (Admin)' : ' (Agente)');
   document.getElementById('admp').classList.add('open');
   document.body.style.overflow = 'hidden';
+  setTimeout(updateAdminTabs, 300);
   document.querySelectorAll('.atab').forEach(t => t.style.display = '');
   document.querySelector('.adnav h3').textContent = 'Panel de Administración — InmuebleHoy';
   // Show the props tab by default
