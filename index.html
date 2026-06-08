@@ -1263,13 +1263,17 @@ function updateAdminTabs() {
 }
 function openAdmin() {
   if (!currentUser) { OM('mlogin'); return; }
-  document.getElementById('adm-email').textContent = currentUser.email + (currentRole === 'admin' ? ' (Admin)' : ' (Agente)');
+  // If role not yet determined, wait for it
+  if (!currentRole) {
+    setTimeout(openAdmin, 300);
+    return;
+  }
+  var isAdmin = currentRole === 'admin';
+  document.getElementById('adm-email').textContent = currentUser.email + (isAdmin ? ' · Admin' : ' · Agente');
+  // Show/hide tabs based on role
+  document.querySelectorAll('.adm-only').forEach(function(el){ el.style.display = isAdmin ? '' : 'none'; });
   document.getElementById('admp').classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(updateAdminTabs, 300);
-  document.querySelectorAll('.atab').forEach(t => t.style.display = '');
-  document.querySelector('.adnav h3').textContent = 'Panel de Administración — InmuebleHoy';
-  // Show the props tab by default
   showAT('at-props', document.querySelectorAll('.atab')[0]);
   loadAllAdminData();
 }
