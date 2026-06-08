@@ -973,6 +973,7 @@ function filterType(type) {
 }
 
 // ── PROP DETAIL ──
+function openProp(id) { openPropDetail(id); }
 function openPropDetail(id) {
   const p = allProps.find(x => x.id === id);
   if (!p) return;
@@ -1096,17 +1097,50 @@ function sendContact() {
   var tel  = document.getElementById('c-tel').value.trim();
   if (!name || !tel) { showToast('Por favor llena tu nombre y teléfono', 'err'); return; }
   var msg = document.getElementById('c-msg').value.trim() || 'Hola, me interesa esta propiedad.';
-  var lines = 'Hola, soy *' + name + '*';
-  if (_agWaProp) lines += '\n\nPropiedad: *' + _agWaProp + '*';
-  if (_agWaPhoto) lines += '\nFoto: ' + _agWaPhoto;
-  lines += '\n\nMi contacto: ' + tel;
-  lines += '\n\n' + msg;
-  var url = 'https://wa.me/' + _agWaPhone + '?text=' + encodeURIComponent(lines);
-  window.open(url, '_blank');
-  var ok = document.getElementById('ag-ok');
-  ok.textContent = '✅ WhatsApp abierto — envía tu mensaje al agente';
-  ok.style.display = 'block';
-  setTimeout(function(){ CM('magent'); }, 2500);
+  var lines = 'Hola, tengo un cliente interesado.';
+  lines += '
+
+*Cliente:* ' + name;
+  lines += '
+*Teléfono:* ' + tel;
+  if (_agWaProp) lines += '
+*Propiedad:* ' + _agWaProp;
+  if (_agWaPhoto) lines += '
+*Foto:* ' + _agWaPhoto;
+  if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '
+*Mensaje:* ' + msg;
+  var phone = _agWaPhone || '5214921412672';
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
+  CM('magent');
+  showContactSuccess(name, _agWaName);
+}
+
+function showContactSuccess(clientName, agentName) {
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn .3s';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:20px;padding:40px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.25)';
+  var ico = document.createElement('div');
+  ico.style.cssText = 'width:72px;height:72px;background:#eafaf1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px';
+  ico.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+  var h2 = document.createElement('h2');
+  h2.style.cssText = 'font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:8px';
+  h2.textContent = '¡Mensaje enviado!';
+  var p1 = document.createElement('p');
+  p1.style.cssText = 'font-size:14px;color:#5f6368;margin-bottom:6px';
+  p1.textContent = 'Tu información fue enviada a ' + (agentName || 'el agente') + '.';
+  var p2 = document.createElement('p');
+  p2.style.cssText = 'font-size:13px;color:#9aa0a6;margin-bottom:24px';
+  p2.textContent = 'El agente se pondrá en contacto contigo a la brevedad.';
+  var btn = document.createElement('button');
+  btn.style.cssText = 'background:#2ecc71;color:#fff;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:100%';
+  btn.textContent = '¡Entendido!';
+  btn.onclick = function(){ d.remove(); };
+  box.appendChild(ico); box.appendChild(h2); box.appendChild(p1); box.appendChild(p2); box.appendChild(btn);
+  d.appendChild(box);
+  document.body.appendChild(d);
+  d.onclick = function(e){ if(e.target===d) d.remove(); };
+  setTimeout(function(){ if(d.parentNode) d.remove(); }, 6000);
 }
 function sendCoForm() {
   const ok = document.getElementById('co-ok');
@@ -1672,179 +1706,231 @@ async function fetchImageAsDataURL(url) {
 }
 async function exportPropPDF(prop) {
   if (!prop) return;
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast('Cargando PDF...', '');
+    var scr = document.createElement('script');
+    scr.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    scr.onload = function(){ exportPropPDF(prop); };
+    document.head.appendChild(scr);
+    return;
+  }
   showToast('Generando PDF...', '');
   try {
     const { jsPDF } = window.jspdf;
-    if (!jsPDF) throw new Error('jsPDF no cargado');
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const W=210, H=297, M=16;
-    const GREEN=[40,180,99], DARK=[30,39,46], WHITE=[255,255,255];
-    const LIGHT_GRAY=[248,249,250], MID_GRAY=[127,140,141], BORDER=[220,221,225];
+    const W=210, H=297, M=15;
 
-    // ── HEADER ──────────────────────────────────────────────────────
-    doc.setFillColor(...DARK);
-    doc.rect(0, 0, W, 36, 'F');
-    doc.setFillColor(...GREEN);
-    doc.rect(0, 36, W, 2, 'F');
+    // Colors
+    const C_DARK=[22,31,38], C_GREEN=[39,174,96], C_WHITE=[255,255,255];
+    const C_LIGHT=[246,248,250], C_GRAY=[100,110,120], C_BORDER=[220,224,230];
+    const C_ACCENT=[39,174,96];
 
-    // Logo text
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(20);
-    doc.setTextColor(...GREEN);
-    doc.text('Inmuebles', M, 17);
-    const logoW = doc.getTextWidth('Inmuebles');
-    doc.setTextColor(...WHITE);
-    doc.text('Hoy', M + logoW + 1, 17);
-    doc.setFontSize(7);
-    doc.setFont('helvetica','normal');
-    doc.setTextColor(150,180,150);
-    doc.text('REALTY · ZACATECAS, MX', M, 23);
-
-    // Agent info box (right side of header)
+    // Agent info
     var agName = 'InmuebleHoy Realty';
     var agEmail = 'info@inmuebleshoy.com';
-    var agPhone = '492 141 2672';
+    var agPhone = '4921412672';
     if (typeof currentUser !== 'undefined' && currentUser) {
       agName = currentUser.displayName || currentUser.email.split('@')[0];
       agEmail = currentUser.email;
     }
-    const bx = W - M - 80, by = 5, bw = 80, bh = 27;
-    doc.setDrawColor(80,100,80);
+
+    // ── HEADER: full dark band ──────────────────────────────────
+    doc.setFillColor(...C_DARK);
+    doc.rect(0, 0, W, 40, 'F');
+
+    // Green left accent bar
+    doc.setFillColor(...C_GREEN);
+    doc.rect(0, 0, 4, 40, 'F');
+
+    // Logo
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(22);
+    doc.setTextColor(...C_GREEN);
+    doc.text('Inmuebles', 12, 16);
+    const lw = doc.getTextWidth('Inmuebles');
+    doc.setTextColor(...C_WHITE);
+    doc.text('Hoy', 12 + lw + 1, 16);
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(130,160,140);
+    doc.text('REALTY · ZACATECAS, MEXICO', 12, 22);
+
+    // Divider line in header
+    doc.setDrawColor(50,65,75);
     doc.setLineWidth(0.3);
-    doc.rect(bx, by, bw, bh, 'S');
+    doc.line(12, 26, W-12, 26);
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(120,200,120);
-    doc.text('AGENTE RESPONSABLE', bx+4, by+6);
+    // Agent box (right side of header)
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(6);
+    doc.setTextColor(100,200,130);
+    doc.text('AGENTE RESPONSABLE', W-12, 30, {align:'right'});
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...C_WHITE);
+    doc.text(agName, W-12, 35, {align:'right'});
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(160,200,170);
+    doc.text(agEmail + '  |  Tel: ' + agPhone, W-12, 39, {align:'right'});
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
-    const agNameLines = doc.splitTextToSize(agName, bw-8);
-    doc.text(agNameLines[0], bx+4, by+12);
+    let y = 50;
 
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...GREEN);
-    doc.text('Tel: ' + agPhone, bx+4, by+18);
-    doc.setFontSize(7); doc.setTextColor(160,210,160);
-    doc.text(agEmail, bx+4, by+23.5);
-
-    let y = 46;
-
-    // ── PROPERTY TYPE BADGE ─────────────────────────────────────────
+    // ── TYPE BADGE ──────────────────────────────────────────────
     const typeLabel = prop.type==='renta'?'EN RENTA':prop.type==='desarrollo'?'PREVENTA':'EN VENTA';
-    const typeColor = prop.type==='renta'?[52,73,94]:prop.type==='desarrollo'?[211,84,0]:GREEN;
-    doc.setFillColor(...typeColor);
-    doc.rect(M, y, 28, 6.5, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...WHITE);
-    doc.text(typeLabel, M+14, y+4.5, {align:'center'});
-    y += 10;
+    const typeClr = prop.type==='renta'?[41,128,185]:prop.type==='desarrollo'?[192,57,43]:C_GREEN;
+    doc.setFillColor(...typeClr);
+    doc.rect(M, y, 24, 5.5, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...C_WHITE);
+    doc.text(typeLabel, M+12, y+4, {align:'center'});
+    y += 9;
 
-    // ── TITLE ───────────────────────────────────────────────────────
-    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(...DARK);
+    // ── TITLE ───────────────────────────────────────────────────
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.setTextColor(...C_DARK);
     const titleLines = doc.splitTextToSize(prop.title||'Propiedad', W-M*2);
     doc.text(titleLines, M, y);
-    y += titleLines.length * 7 + 1;
+    y += titleLines.length * 7.5;
 
-    // ── PRICE ───────────────────────────────────────────────────────
-    doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...GREEN);
+    // ── PRICE ───────────────────────────────────────────────────
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(22);
+    doc.setTextColor(...C_GREEN);
     doc.text((prop.price||'') + ' ' + (prop.currency||'MXN'), M, y);
+    y += 9;
+
+    // ── LOCATION ────────────────────────────────────────────────
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...C_GRAY);
+    const locParts = [prop.city, prop.zone, prop.address].filter(Boolean);
+    if (locParts.length) { doc.text(locParts.join('  ·  '), M, y); y += 7; }
+
+    // ── DIVIDER ─────────────────────────────────────────────────
+    doc.setDrawColor(...C_BORDER);
+    doc.setLineWidth(0.3);
+    doc.line(M, y, W-M, y);
     y += 8;
 
-    // ── LOCATION ────────────────────────────────────────────────────
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MID_GRAY);
-    const loc = [prop.city, prop.zone, prop.address].filter(Boolean).join(' · ');
-    doc.text(loc, M, y);
-    y += 7;
-
-    // ── DIVIDER ─────────────────────────────────────────────────────
-    doc.setDrawColor(...BORDER); doc.setLineWidth(0.3);
-    doc.line(M, y, W-M, y); y += 7;
-
-    // ── SPECS GRID (2 columns) ───────────────────────────────────────
+    // ── SPECS GRID ──────────────────────────────────────────────
     const specs = [
-      ['Recamaras', prop.beds||'—'],
-      ['Banos', prop.baths||'—'],
-      ['m2 Construidos', prop.sqm ? prop.sqm+' m2' : '—'],
-      ['m2 Terreno', prop.sqmt ? prop.sqmt+' m2' : '—'],
-      ['Estacionamientos', prop.parking||'—'],
-      ['Categoria', prop.cat||'—'],
+      ['Recamaras', String(prop.beds||'—')],
+      ['Banos', String(prop.baths||'—')],
+      ['m2 Const.', prop.sqm ? String(prop.sqm)+' m2' : '—'],
+      ['m2 Terreno', prop.sqmt ? String(prop.sqmt)+' m2' : '—'],
+      ['Estacionamientos', String(prop.parking||'—')],
+      ['Categoria', String(prop.cat||'—')],
     ];
-    const cols = 3, cW = (W-M*2-8)/cols, cH = 16;
+    const COLS = 3;
+    const cW = (W - M*2 - (COLS-1)*4) / COLS;
+    const cH = 15;
     specs.forEach(function(s, i) {
-      const col = i%cols, row = Math.floor(i/cols);
+      const col = i % COLS, row = Math.floor(i / COLS);
       const sx = M + col*(cW+4), sy = y + row*(cH+4);
-      doc.setFillColor(...LIGHT_GRAY);
+      // Card bg
+      doc.setFillColor(...C_LIGHT);
       doc.rect(sx, sy, cW, cH, 'F');
-      doc.setDrawColor(...BORDER); doc.setLineWidth(0.2);
-      doc.rect(sx, sy, cW, cH, 'S');
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MID_GRAY);
-      doc.text(s[0], sx+3, sy+5.5);
-      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...DARK);
-      doc.text(String(s[1]), sx+3, sy+12.5);
+      // Left accent
+      doc.setFillColor(...C_GREEN);
+      doc.rect(sx, sy, 2, cH, 'F');
+      // Label
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(...C_GRAY);
+      doc.text(s[0], sx+5, sy+5.5);
+      // Value
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...C_DARK);
+      doc.text(s[1], sx+5, sy+12);
     });
-    y += Math.ceil(specs.length/cols) * (cH+4) + 4;
+    y += Math.ceil(specs.length/COLS) * (cH+4) + 4;
 
-    // ── DESCRIPTION ─────────────────────────────────────────────────
-    if (prop.desc) {
-      doc.setDrawColor(...BORDER); doc.line(M, y, W-M, y); y += 7;
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...DARK);
-      doc.text('Descripcion', M, y); y += 6;
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...MID_GRAY);
+    // ── DESCRIPTION ─────────────────────────────────────────────
+    if (prop.desc && prop.desc.trim()) {
+      doc.setDrawColor(...C_BORDER);
+      doc.line(M, y, W-M, y);
+      y += 7;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...C_DARK);
+      doc.text('Descripcion', M, y);
+      y += 6;
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...C_GRAY);
       const dLines = doc.splitTextToSize(prop.desc, W-M*2);
-      const maxLines = Math.min(dLines.length, 8);
-      doc.text(dLines.slice(0, maxLines), M, y);
-      y += maxLines * 4.5 + 6;
+      doc.text(dLines.slice(0, 9), M, y);
+      y += Math.min(dLines.length, 9) * 4.5 + 6;
     }
 
-    // ── PHOTOS ──────────────────────────────────────────────────────
+    // ── PHOTOS ──────────────────────────────────────────────────
     if (prop.photos && prop.photos.length > 0) {
-      doc.setDrawColor(...BORDER); doc.line(M, y, W-M, y); y += 7;
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...DARK);
-      doc.text('Fotografias', M, y); y += 6;
+      if (y + 50 > H - 24) { doc.addPage(); y = 20; }
+      doc.setDrawColor(...C_BORDER);
+      doc.line(M, y, W-M, y);
+      y += 7;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...C_DARK);
+      doc.text('Fotografias', M, y);
+      y += 6;
 
-      const maxPhotos = Math.min(prop.photos.length, 4);
+      const maxP = Math.min(prop.photos.length, 3);
       const gap = 4;
-      const pW = (W - M*2 - gap*(maxPhotos-1)) / maxPhotos;
-      const pH = pW * 0.68; // fixed aspect ratio
+      const pW = (W - M*2 - gap*(maxP-1)) / maxP;
+      const pH = pW * 0.65;
 
-      if (y + pH > H - 28) { doc.addPage(); y = 20; }
+      if (y + pH > H - 24) { doc.addPage(); y = 20; }
 
-      for (var i = 0; i < maxPhotos; i++) {
+      for (var pi = 0; pi < maxP; pi++) {
         try {
-          const imgData = await fetchImageAsDataURL(prop.photos[i]);
+          const imgData = await fetchImageAsDataURL(prop.photos[pi]);
           if (imgData) {
-            const px = M + i*(pW+gap);
-            // Draw white background first
-            doc.setFillColor(240,240,240);
+            const px = M + pi*(pW+gap);
+            doc.setFillColor(235,238,242);
             doc.rect(px, y, pW, pH, 'F');
-            // Add image with contain (not stretch)
             doc.addImage(imgData, 'JPEG', px, y, pW, pH, '', 'MEDIUM');
-            // Border
-            doc.setDrawColor(...BORDER); doc.setLineWidth(0.2);
+            doc.setDrawColor(...C_BORDER);
+            doc.setLineWidth(0.2);
             doc.rect(px, y, pW, pH, 'S');
           }
-        } catch(e) { console.warn('Photo error:', e); }
+        } catch(e) {}
       }
       y += pH + 8;
     }
 
-    // ── FOOTER ──────────────────────────────────────────────────────
-    doc.setFillColor(...DARK);
-    doc.rect(0, H-14, W, 14, 'F');
-    doc.setFillColor(...GREEN);
-    doc.rect(0, H-14, 3, 14, 'F');
+    // ── FOOTER ──────────────────────────────────────────────────
+    doc.setFillColor(...C_DARK);
+    doc.rect(0, H-16, W, 16, 'F');
+    doc.setFillColor(...C_GREEN);
+    doc.rect(0, H-16, 3, 16, 'F');
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
-    doc.text('InmuebleHoy Realty', M, H-8);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(150,170,150);
-    doc.text('Zacatecas, Mexico', M, H-4);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...C_WHITE);
+    doc.text('InmuebleHoy Realty', M, H-9);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(120,150,130);
+    doc.text('Zacatecas, Mexico · inmuebleshoy.com', M, H-4.5);
 
-    const today = new Date().toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'});
-    doc.setTextColor(120,140,120);
-    doc.text(today, W-M, H-6, {align:'right'});
+    const today = new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});
+    doc.setTextColor(100,130,110);
+    doc.text(today, W-M, H-7, {align:'right'});
+    doc.setFont('helvetica','italic');
+    doc.setFontSize(6.5);
+    doc.text('Documento informativo, sujeto a cambios.', W-M, H-3, {align:'right'});
 
-    const fname = (prop.title||'propiedad').replace(/[^a-zA-Z0-9 ]/g,'_').slice(0,40).trim() + '.pdf';
+    const fname = (prop.title||'propiedad').replace(/[^a-zA-Z0-9 ]/g,'_').trim().slice(0,40) + '.pdf';
     doc.save(fname);
     showToast('PDF descargado', 'ok');
   } catch(e) {
-    console.error('PDF error:', e);
+    console.error('PDF:', e);
     showToast('Error PDF: ' + e.message, 'err');
   }
 }
