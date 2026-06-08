@@ -1384,13 +1384,14 @@ function loadAgentsList() {
   });
 }
 
-function loadAgentSelect() {
+function loadAgentSelect(preselectId) {
   if (!db) return;
   db.ref('agents').once('value', snap => {
     const sel = document.getElementById('pf-agent');
     const opts = ['<option value="">— Sin asignar —</option>'];
     snap.forEach(c => { const a = c.val(); opts.push(`<option value="${escAttr(c.key)}">${escHtml(a.name)}</option>`); });
     sel.innerHTML = opts.join('');
+    if (preselectId) sel.value = preselectId;
   });
 }
 
@@ -1417,8 +1418,9 @@ function editProp(id) {
     document.getElementById('pf-desc').value = p.desc || '';
     // Pre-fill agent selector (admin only, hidden for agents)
     if (currentRole === 'admin') {
-      var agSel = document.getElementById('pf-agent');
-      if (agSel && p.agentId) { agSel.value = p.agentId; }
+      var fgAgent = document.getElementById('fg-agent');
+      if (fgAgent) fgAgent.style.display = '';
+      loadAgentSelect(p.agentId || '');
     }
     renderPhotoPreviews();
     // Go to publish tab using showAT so visibility is handled correctly
@@ -1426,9 +1428,11 @@ function editProp(id) {
     var pubTab = null;
     tabs.forEach(function(t){ if(t.getAttribute('onclick') && t.getAttribute('onclick').indexOf('at-addprop') > -1) pubTab = t; });
     showAT('at-addprop', pubTab || tabs[0]);
-    // Also hide agent selector for non-admins
-    var fgAgent = document.getElementById('fg-agent');
-    if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
+    // Hide agent selector for non-admins
+    if (currentRole !== 'admin') {
+      var fgAgent2 = document.getElementById('fg-agent');
+      if (fgAgent2) fgAgent2.style.display = 'none';
+    }
     document.getElementById('prop-form-title').textContent = 'Editar propiedad';
     document.getElementById('btn-saveprop').textContent = '💾 Actualizar propiedad';
     document.getElementById('btn-canceledit').style.display = 'inline-block';
