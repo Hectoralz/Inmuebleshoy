@@ -1332,19 +1332,22 @@ function loadPropsList() {
 
 function loadAgentsList() {
   const el = document.getElementById('adm-agents-list');
-  if (!db) { el.innerHTML = `<p class="merr">Firebase no configurado.</p>`; return; }
-  db.ref('agents').once('value', snap => {
+  if (!el || !db) return;
+  try { db.ref('agents').off('value'); } catch(e) {}
+  db.ref('agents').on('value', snap => {
+    const el2 = document.getElementById('adm-agents-list');
+    if (!el2) return;
     const ags = [];
-    snap.forEach(c => ags.push({ id: c.key, ...c.val() }));
-    if (!ags.length) { el.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay agentes registrados aún.</p>'; return; }
+    snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
+    if (!ags.length) { el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay agentes registrados aún.</p>'; return; }
     el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
-      <thead><tr><th>Nombre</th><th>Correo</th><th>Zona</th><th>Propiedades</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Telefono</th><th>Zona</th><th>Acciones</th></tr></thead>
       <tbody>${ags.map(a => `<tr>
-        <td style="font-weight:600">${escHtml(a.name)}</td>
-        <td>${escHtml(a.email||'—')}</td>
+        <td style="font-weight:600">${escHtml(a.name||'')}</td>
+        <td>${escHtml(a.email||'')}</td>
+        <td>${escHtml(a.phone||'—')}</td>
         <td>${escHtml(a.zone||'—')}</td>
-        <td>${a.props||0}</td>
-        <td><button class="bdel" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name)}')">Eliminar</button></td>
+        <td><button class="bdel" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name||'')}')">🗑 Eliminar</button></td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   });
