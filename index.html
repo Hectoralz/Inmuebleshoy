@@ -1767,10 +1767,14 @@ async function exportPropPDF(prop) {
   if (typeof currentUser !== 'undefined' && currentUser) {
     agName = currentUser.displayName || currentUser.email.split('@')[0];
     agEmail = currentUser.email;
-    // Get phone from agent record
-    if (window.allAgents) {
-      var myAg = window.allAgents.find(function(a){ return a.email === currentUser.email; });
-      if (myAg && myAg.phone) agPhone = myAg.phone;
+    // Get phone from Firebase directly
+    if (window.db && currentUser.uid) {
+      try {
+        var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
+        var agData = agSnap.val();
+        if (agData && agData.phone) agPhone = agData.phone;
+        if (agData && agData.name) agName = agData.name;
+      } catch(e) {}
     }
   }
 
