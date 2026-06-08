@@ -1314,7 +1314,9 @@ function showAT(id, btn) {
   if (id === 'at-props') loadPropsList();
   if (id === 'at-agents') loadAgentsList();
   if (id === 'at-addprop') {
-    loadAgentSelect();
+    // Only load agent select if it has no options yet (avoid resetting user's selection)
+    var sel = document.getElementById('pf-agent');
+    if (sel && sel.options.length <= 1) loadAgentSelect();
     // Show/hide agent selector based on role
     var fgAgent = document.getElementById('fg-agent');
     if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
@@ -1323,7 +1325,9 @@ function showAT(id, btn) {
 function loadAllAdminData() {
   loadPropsList();
   loadAgentsList();
-  loadAgentSelect();
+  // Only load agent select if empty
+  var sel = document.getElementById('pf-agent');
+  if (sel && sel.options.length <= 1) loadAgentSelect();
 }
 
 function loadPropsList() {
