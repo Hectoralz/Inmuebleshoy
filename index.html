@@ -520,7 +520,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
           <div class="upv" id="photo-prevs"></div>
         </div>
 
-        <div class="fg"><label>Agente responsable</label><select id="pf-agent"><option value="">— Sin asignar —</option></select></div>
+        <div class="fg" id="fg-agent"><label>Agente responsable</label><select id="pf-agent"><option value="">— Sin asignar —</option></select></div>
         <button class="bsv" id="btn-saveprop" onclick="saveProp()">💾 Publicar propiedad</button>
         &nbsp;&nbsp;<button class="bsv" style="background:var(--g400)" id="btn-canceledit" onclick="cancelEdit()" style="display:none">Cancelar edición</button>
       </div>
@@ -1236,19 +1236,16 @@ function openAgentPublish() {
       }
     });
   }
-  // Open the admin panel but only show the publish tab
+  // Open the admin panel for agents: show Mis Propiedades + Publicar, hide admin-only tabs
   document.getElementById('adm-email').textContent = currentUser.email + ' (Agente)';
   document.getElementById('admp').classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(updateAdminTabs, 300);
-  // Force to publish-only tab and hide admin-only tabs
-  showAT('at-addprop', document.querySelectorAll('.atab')[2]);
-  // Hide admin-only tabs for agents
-  document.querySelectorAll('.atab')[0].style.display = 'none'; // Propiedades list
-  document.querySelectorAll('.atab')[1].style.display = 'none'; // Agentes list
-  document.querySelectorAll('.atab')[3].style.display = 'none'; // Crear agente
-  // Change header
-  document.querySelector('.adnav h3').textContent = 'Publicar Propiedad — InmuebleHoy';
+  // Hide only admin-only tabs
+  document.querySelectorAll('.adm-only').forEach(function(el){ el.style.display = 'none'; });
+  // Start on Mis Propiedades tab
+  showAT('at-props', document.querySelectorAll('.atab')[0]);
+  loadAllAdminData();
+  document.querySelector('.adnav h3').textContent = 'Panel de Agente — InmuebleHoy';
 }
 
 function updateAdminTabs() {
@@ -1292,7 +1289,12 @@ function showAT(id, btn) {
   btn.classList.add('on');
   if (id === 'at-props') loadPropsList();
   if (id === 'at-agents') loadAgentsList();
-  if (id === 'at-addprop') loadAgentSelect();
+  if (id === 'at-addprop') {
+    loadAgentSelect();
+    // Show/hide agent selector based on role
+    var fgAgent = document.getElementById('fg-agent');
+    if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
+  }
 }
 function loadAllAdminData() {
   loadPropsList();
@@ -1307,7 +1309,8 @@ function loadPropsList() {
   function renderAdminProps() {
     const el2 = document.getElementById('adm-props-list');
     if (!el2) return;
-    const props = allProps && allProps.length ? allProps : [];
+    var allPropsRaw = allProps && allProps.length ? allProps : [];
+    var props = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
     if (!props.length) {
       el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
       return;
@@ -1487,7 +1490,7 @@ async function saveProp() {
     parking: parseInt(document.getElementById('pf-parking').value) || 0,
     desc:  document.getElementById('pf-desc').value.trim(),
     photos,
-    agentId: document.getElementById('pf-agent').value,
+    agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : (currentUser ? currentUser.uid : ''),
     updatedAt: Date.now(),
   };
   try {
