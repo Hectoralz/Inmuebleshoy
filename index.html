@@ -1086,7 +1086,10 @@ function openAgentContact(name, phone, propTitle, photoUrl) {
   // Mexico mobile: wa.me needs 521 + 10 digits
   if (cleanPhone.length === 10) cleanPhone = '521' + cleanPhone;
   else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) cleanPhone = '521' + cleanPhone.slice(2);
-  if (!cleanPhone || cleanPhone.length < 10) cleanPhone = '5214921412672';
+  if (!cleanPhone || cleanPhone.length < 10) {
+    showToast('Este agente no tiene número de WhatsApp registrado', 'err');
+    return;
+  }
   _agWaPhone = cleanPhone;
   _agWaProp = propTitle || '';
   _agWaPhoto = photoUrl || '';
@@ -1119,7 +1122,8 @@ function sendContact() {
   if (_agWaProp) lines += '*Propiedad:* ' + _agWaProp + nl;
   if (_agWaPhoto && _agWaPhoto.startsWith('http')) lines += '*Foto:* ' + _agWaPhoto + nl;
   if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '*Mensaje:* ' + msg;
-  var phone = _agWaPhone || '5214921412672';
+  var phone = _agWaPhone;
+  if (!phone) { showToast('Este agente no tiene número registrado', 'err'); return; }
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
   CM('magent');
   showContactSuccess(name, _agWaName);
@@ -1333,18 +1337,8 @@ function loadPropsList() {
   } else {
     el.innerHTML = '<div class="spin"></div>';
   }
-  // Also set up a watcher so if allProps updates, panel updates too
-  if (!window._adminPropsWatcher && db) {
-    window._adminPropsWatcher = true;
-    db.ref('properties').on('value', snap => {
-      allProps = [];
-      snap.forEach(c => { const v = c.val(); if(v && v.title) allProps.push({ id: c.key, ...v }); });
-      renderGrids();
-      if (document.getElementById('admp') && document.getElementById('admp').classList.contains('open')) {
-        renderAdminProps();
-      }
-    });
-  }
+  // Panel updates automatically because loadPublicData already has a realtime listener
+  // that calls renderGrids() — no duplicate watcher needed here
 }
 
 function loadAgentsList() {
@@ -1401,12 +1395,20 @@ function editProp(id) {
     document.getElementById('pf-zone').value = p.zone || '';
     document.getElementById('pf-address').value = p.address || '';
     document.getElementById('pf-desc').value = p.desc || '';
+    // Pre-fill agent selector (admin only, hidden for agents)
+    if (currentRole === 'admin') {
+      var agSel = document.getElementById('pf-agent');
+      if (agSel && p.agentId) { agSel.value = p.agentId; }
+    }
     renderPhotoPreviews();
-    // Ir a pestaña de formulario
-    document.querySelectorAll('.asec').forEach(s => s.classList.remove('on'));
-    document.querySelectorAll('.atab').forEach(b => b.classList.remove('on'));
-    document.getElementById('at-addprop').classList.add('on');
-    document.querySelectorAll('.atab')[2].classList.add('on');
+    // Go to publish tab using showAT so visibility is handled correctly
+    var tabs = document.querySelectorAll('.atab');
+    var pubTab = null;
+    tabs.forEach(function(t){ if(t.getAttribute('onclick') && t.getAttribute('onclick').indexOf('at-addprop') > -1) pubTab = t; });
+    showAT('at-addprop', pubTab || tabs[0]);
+    // Also hide agent selector for non-admins
+    var fgAgent = document.getElementById('fg-agent');
+    if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
     document.getElementById('prop-form-title').textContent = 'Editar propiedad';
     document.getElementById('btn-saveprop').textContent = '💾 Actualizar propiedad';
     document.getElementById('btn-canceledit').style.display = 'inline-block';
@@ -1496,15 +1498,14 @@ async function saveProp() {
   try {
     if (!db) throw new Error('Firebase no configurado. Agrega tus credenciales en la sección de configuración del código.');
     const _was = editingPropId;
-    // Show success UI immediately, don't wait
-    cancelEdit();
-    showSaveSuccess(title, _was ? 'actualizada' : 'publicada');
     if (_was) {
       await db.ref('properties/' + _was).update(data);
     } else {
       data.createdAt = Date.now();
       await db.ref('properties').push(data);
     }
+    cancelEdit();
+    showSaveSuccess(title, _was ? 'actualizada' : 'publicada');
   } catch(e) {
     msgEl.innerHTML = `<div class="merr">Error: ${escHtml(e.message)}</div>`;
   }
@@ -1781,18 +1782,18 @@ async function exportPropPDF(prop) {
   var agName = 'InmuebleHoy Realty';
   var agEmail = 'info@inmuebleshoy.com';
   var agPhone = '492 141 2672';
-  if (typeof currentUser !== 'undefined' && currentUser) {
-    agName = currentUser.displayName || currentUser.email.split('@')[0];
-    agEmail = currentUser.email;
-    // Get phone from Firebase directly
-    if (window.db && currentUser.uid) {
-      try {
-        var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
-        var agData = agSnap.val();
-        if (agData && agData.phone) agPhone = agData.phone;
-        if (agData && agData.name) agName = agData.name;
-      } catch(e) {}
-    }
+  // Use the agent assigned to the property, not the logged-in user
+  var agentIdToLookup = prop.agentId || (currentUser && currentUser.uid);
+  if (window.db && agentIdToLookup) {
+    try {
+      var agSnap = await db.ref('agents/' + agentIdToLookup).once('value');
+      var agData = agSnap.val();
+      if (agData) {
+        if (agData.name) agName = agData.name;
+        if (agData.email) agEmail = agData.email;
+        if (agData.phone) agPhone = agData.phone;
+      }
+    } catch(e) {}
   }
 
   var photos = (prop.photos||[]).filter(function(p){ return p && (p.startsWith('http') || p.startsWith('data:')); }).slice(0,3);
