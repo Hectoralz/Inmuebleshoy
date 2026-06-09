@@ -375,38 +375,6 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 </section>
 
 
-<!-- CÓMO FUNCIONA -->
-<section>
-  <div class="si2">
-    <div class="sh" style="justify-content:center;text-align:center"><div style="width:100%"><h2>¿Cómo <span>funciona</span>?</h2><p>Encontrar o publicar tu propiedad nunca fue tan fácil</p></div></div>
-    <div class="steps">
-      <div class="step"><div class="snum">1</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>Busca tu propiedad</h3><p>Usa filtros avanzados para encontrar la opción ideal.</p></div>
-      <div class="step"><div class="snum">2</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><h3>Compara opciones</h3><p>Revisa fotos, características y precios.</p></div>
-      <div class="step"><div class="snum">3</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.63A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6z"/></svg></div><h3>Contacta al agente</h3><p>Comunícate para agendar una visita.</p></div>
-      <div class="step"><div class="snum">4</div><div class="sico"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h3>Cierra el trato</h3><p>Con apoyo de asesores certificados.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- DESARROLLOS -->
-<section id="nuevos" style="background:var(--g50)">
-  <div class="si2">
-    <div class="sh"><div><h2>Nuevos <span>desarrollos</span></h2><p>Estrena tu propiedad con las mejores preventas</p></div><a href="#" class="sa" onclick="OSM('Desarrollos');return false">Ver todos ›</a></div>
-    <div class="pgrid" id="dev-grid"><div class="spin"></div></div>
-  </div>
-</section>
-
-
-
-<!-- BANNER -->
-<div class="pban">
-  <h2>¿Quieres vender o rentar<br><span>tu propiedad?</span></h2>
-  <p>Publica en InmuebleHoy Realty y llega a compradores en Zacatecas y Guadalupe.</p>
-  <div class="bbtns">
-    <button class="bbg" onclick="OM('mpublish')">Publicar propiedad gratis</button>
-    <button class="bbo" onclick="OM('minfo')">Saber más</button>
-  </div>
-</div>
 
 
 <!-- FOOTER -->
@@ -705,7 +673,6 @@ const CLD = {
 // ── ESTADO ──
 let db = null, auth = null, currentUser = null, currentRole = null;
 let allProps = [], allAgents = [], pendingPhotos = [], agentPhotoFile = null, editingPropId = null;
-window.allAgents = allAgents;
 let favs = JSON.parse(localStorage.getItem('ih_favs') || '{}');
 
 // ── INIT ──
@@ -781,18 +748,9 @@ function loadPublicData() {
   db.ref('agents').on('value', snap => {
     const ags = [];
     snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
-    allAgents = ags; window.allAgents = ags;
+    allAgents = ags;
     renderAgents(ags.length ? ags : DEMO_AGENTS);
-  }, (err) => {
-    console.warn('agents listener error:', err.code);
-    // On error, try a one-time read instead
-    db.ref('agents').once('value').then(snap => {
-      const ags = [];
-      snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
-      allAgents = ags; window.allAgents = ags;
-      renderAgents(ags.length ? ags : DEMO_AGENTS);
-    }).catch(() => renderAgents(DEMO_AGENTS));
-  });
+  }, () => renderAgents(DEMO_AGENTS));
 }
 
 function loadDemoData() {
@@ -839,9 +797,9 @@ function renderGrids() {
   const v = allProps.filter(p => p.type === 'venta');
   const r = allProps.filter(p => p.type === 'renta');
   const d = allProps.filter(p => p.type === 'desarrollo');
-  setGrid('venta-grid', v, 'No hay propiedades en venta aún.');
-  setGrid('renta-grid', r, 'No hay propiedades en renta aún.');
-  setGrid('dev-grid', d, 'No hay desarrollos publicados aún.');
+  setGrid('venta-grid', v.slice(0,8), 'No hay propiedades en venta aún.');
+  setGrid('renta-grid', r.slice(0,8), 'No hay propiedades en renta aún.');
+  setGrid('dev-grid', d.slice(0,8), 'No hay desarrollos publicados aún.');
 }
 function setGrid(id, arr, emptyMsg) {
   document.getElementById(id).innerHTML = arr.length
@@ -970,9 +928,13 @@ function OSM(mode, query) {
   let results = [...allProps];
   if (q) {
     results = results.filter(p =>
-      p.title.toLowerCase().includes(q) ||
+      (p.title||'').toLowerCase().includes(q) ||
       (p.city||'').toLowerCase().includes(q) ||
-      (p.cat||'').toLowerCase().includes(q)
+      (p.cat||'').toLowerCase().includes(q) ||
+      (p.desc||'').toLowerCase().includes(q) ||
+      (p.zone||'').toLowerCase().includes(q) ||
+      (p.price||'').toLowerCase().includes(q) ||
+      (p.address||'').toLowerCase().includes(q)
     );
   }
   if (mode === 'Comprar') results = results.filter(p => p.type === 'venta');
@@ -1055,26 +1017,32 @@ function openPropDetail(id) {
     var cb = document.getElementById('prop-contact-btn');
     if(cb) cb.onclick = function(){
       var agName = 'InmuebleHoy Realty';
-      var agPhone = '4921412672';
+      var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       if (p.agentId && window.db) {
-        // Scan all agents — use ASCII-only comparison to handle invisible unicode chars
-        var cleanAgentId = p.agentId.replace(/[^a-zA-Z0-9]/g, '');
-        db.ref('agents').once('value', function(snap) {
-          snap.forEach(function(c) {
-            var d = c.val();
-            if (!d) return;
-            var cleanKey = c.key.replace(/[^a-zA-Z0-9]/g, '');
-            if (cleanKey === cleanAgentId) {
-              if (d.name) agName = d.name;
-              var ph = (d.phone || '').toString().replace(/[^0-9]/g, '');
-              if (ph.length >= 10) agPhone = ph;
-            }
-          });
+        // Try allAgents cache first
+        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
+        if (ag) {
+          agPhone = ag.phone || agPhone;
+          agName = ag.name || agName;
           CM('mprop');
           openAgentContact(agName, agPhone, p.title, propPhoto);
-        });
+        } else {
+          // Fetch directly from Firebase
+          db.ref('agents/' + p.agentId).once('value', function(snap) {
+            var agData = snap.val();
+            if (agData && agData.phone) {
+              agPhone = agData.phone;
+              agName = agData.name || agName;
+            }
+            // If admin assigned (no agent record), keep agency phone
+            CM('mprop');
+            openAgentContact(agName, agPhone, p.title, propPhoto);
+          });
+          return; // wait for async
+        }
       } else {
+        // No agent assigned — contact agency directly
         CM('mprop');
         openAgentContact(agName, agPhone, p.title, propPhoto);
       }
@@ -1286,6 +1254,21 @@ function openAgentPublish() {
   document.body.style.overflow = 'hidden';
   // Hide only admin-only tabs
   document.querySelectorAll('.adm-only').forEach(function(el){ el.style.display = 'none'; });
+  // Show agent selector locked to themselves
+  var fgA = document.getElementById('fg-agent');
+  if (fgA && currentUser && db) {
+    fgA.style.display = '';
+    var agSel = document.getElementById('pf-agent');
+    if (agSel) {
+      agSel.disabled = true;
+      db.ref('agents/' + currentUser.uid).once('value', function(s) {
+        var d = s.val();
+        var label = d && d.name ? d.name : currentUser.email;
+        agSel.innerHTML = '<option value="' + currentUser.uid + '">' + label + '</option>';
+        agSel.value = currentUser.uid;
+      });
+    }
+  }
   // Start on Mis Propiedades tab
   showAT('at-props', document.querySelectorAll('.atab')[0]);
   loadAllAdminData();
