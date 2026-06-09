@@ -1048,34 +1048,21 @@ function openPropDetail(id) {
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       if (p.agentId) {
-        // Use allAgents cache - already loaded publicly at startup, no auth needed
-        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-        if (ag) {
-          agName = ag.name || agName;
-          var rawPhone = (ag.phone || '').toString().replace(/[^0-9]/g, '');
-          if (rawPhone.length >= 10) agPhone = rawPhone;
-          CM('mprop');
-          openAgentContact(agName, agPhone, p.title, propPhoto);
-        } else if (window.db) {
-          db.ref('agents/' + p.agentId).once('value', function(snap) {
-            var d = snap.val();
-            if (d) {
-              agName = d.name || agName;
-              var rawPhone = (d.phone || '').toString().replace(/[^0-9]/g, '');
-              if (rawPhone.length >= 10) agPhone = rawPhone;
-            }
-            CM('mprop');
-            openAgentContact(agName, agPhone, p.title, propPhoto);
-          });
-        } else {
-          CM('mprop');
-          openAgentContact(agName, agPhone, p.title, propPhoto);
+        // Use agentName/agentPhone stored directly on property (no auth needed)
+        if (p.agentName) agName = p.agentName;
+        if (p.agentPhone && p.agentPhone.length >= 10) agPhone = p.agentPhone;
+        else {
+          // Fallback: try allAgents cache
+          var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
+          if (ag) {
+            agName = ag.name || agName;
+            var rawPhone = (ag.phone || '').toString().replace(/[^0-9]/g, '');
+            if (rawPhone.length >= 10) agPhone = rawPhone;
+          }
         }
-        return;
-      } else {
-        CM('mprop');
-        openAgentContact(agName, agPhone, p.title, propPhoto);
       }
+      CM('mprop');
+      openAgentContact(agName, agPhone, p.title, propPhoto);
     };
     var fb = document.getElementById('prop-fav-btn');
     if(fb) fb.onclick = function(){ toggleFav(null, p.id); };
@@ -1583,6 +1570,20 @@ async function saveProp() {
   btn.innerHTML = '<span class="spin"></span> Guardando…';
   try {
     const photos = await uploadPendingPhotos();
+    const _agentId = currentRole === 'admin' ? document.getElementById('pf-agent').value : document.getElementById('pf-agent').value || (currentUser ? currentUser.uid : '');
+    // Snapshot agent name+phone directly into the property so public visitors can read them without auth
+    let _agentName = '', _agentPhone = '';
+    if (_agentId) {
+      const _agInCache = (window.allAgents || []).find(a => a.id === _agentId);
+      if (_agInCache) { _agentName = _agInCache.name || ''; _agentPhone = (_agInCache.phone || '').toString().replace(/[^0-9]/g,''); }
+      else {
+        try {
+          const _agSnap = await db.ref('agents/' + _agentId).once('value');
+          const _agD = _agSnap.val();
+          if (_agD) { _agentName = _agD.name || ''; _agentPhone = (_agD.phone || '').toString().replace(/[^0-9]/g,''); }
+        } catch(e) {}
+      }
+    }
     const data = {
       title, price, city,
       zone: document.getElementById('pf-zone').value.trim(),
@@ -1597,7 +1598,9 @@ async function saveProp() {
       parking: parseInt(document.getElementById('pf-parking').value) || 0,
       desc:  document.getElementById('pf-desc').value.trim(),
       photos,
-      agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : document.getElementById('pf-agent').value || (currentUser ? currentUser.uid : ''),
+      agentId: _agentId,
+      agentName: _agentName,
+      agentPhone: _agentPhone,
       updatedAt: Date.now(),
     };
     if (!db) throw new Error('Firebase no configurado.');
