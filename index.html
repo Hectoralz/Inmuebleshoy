@@ -1058,14 +1058,18 @@ function openPropDetail(id) {
       var agPhone = '4921412672';
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       if (p.agentId && window.db) {
-        // Always fetch agent data directly from Firebase (rules now allow public read)
-        db.ref('agents/' + p.agentId).once('value', function(snap) {
-          var d = snap.val();
-          if (d) {
-            if (d.name) agName = d.name;
-            var ph = (d.phone || '').toString().replace(/[^0-9]/g, '');
-            if (ph.length >= 10) agPhone = ph;
-          }
+        // Scan all agents to find the one matching agentId (handles key mismatches)
+        db.ref('agents').once('value', function(snap) {
+          snap.forEach(function(c) {
+            var d = c.val();
+            if (!d) return;
+            // Match by exact key or by key starting with same chars (truncation fix)
+            if (c.key === p.agentId || c.key.startsWith(p.agentId) || p.agentId.startsWith(c.key)) {
+              if (d.name) agName = d.name;
+              var ph = (d.phone || '').toString().replace(/[^0-9]/g, '');
+              if (ph.length >= 10) agPhone = ph;
+            }
+          });
           CM('mprop');
           openAgentContact(agName, agPhone, p.title, propPhoto);
         });
