@@ -1334,10 +1334,27 @@ function showAT(id, btn) {
     // Only load agent select if it has no options yet (avoid resetting user's selection)
     var sel = document.getElementById('pf-agent');
     if (sel && sel.options.length <= 1) loadAgentSelect();
-    // Show/hide agent selector based on role (don't override if editProp already set it)
+    // Show agent selector for both admin and agents (agents get it locked to themselves)
     if (!wasEditing) {
       var fgAgent = document.getElementById('fg-agent');
-      if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
+      if (fgAgent) {
+        fgAgent.style.display = '';
+        var agSelEl = document.getElementById('pf-agent');
+        if (currentRole === 'agent' && currentUser && agSelEl) {
+          agSelEl.disabled = true;
+          if (!agSelEl.querySelector('option[value="' + currentUser.uid + '"]') && db) {
+            db.ref('agents/' + currentUser.uid).once('value', function(s) {
+              var d = s.val();
+              agSelEl.innerHTML = '<option value="' + currentUser.uid + '">' + (d && d.name ? d.name : currentUser.email) + '</option>';
+              agSelEl.value = currentUser.uid;
+            });
+          } else if (agSelEl.querySelector('option[value="' + currentUser.uid + '"]')) {
+            agSelEl.value = currentUser.uid;
+          }
+        } else if (currentRole === 'admin' && agSelEl) {
+          agSelEl.disabled = false;
+        }
+      }
     }
   }
 }
