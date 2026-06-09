@@ -1547,6 +1547,8 @@ async function saveProp() {
     }
     cancelEdit();
     showSaveSuccess(title, _was ? 'actualizada' : 'publicada');
+    // Reload props list so Edit buttons work again without page refresh
+    loadPropsList();
   } catch(e) {
     msgEl.innerHTML = `<div class="merr">Error: ${escHtml(e.message)}</div>`;
     btn.disabled = false;
@@ -1823,11 +1825,11 @@ async function exportPropPDF(prop) {
   var agName = 'InmuebleHoy Realty';
   var agEmail = 'info@inmuebleshoy.com';
   var agPhone = '492 141 2672';
-  // Use the agent assigned to the property, not the logged-in user
-  var agentIdToLookup = prop.agentId || (currentUser && currentUser.uid);
-  if (window.db && agentIdToLookup) {
+  // PDF always shows data of the person generating it (currentUser), NOT the assigned agent
+  // If no logged-in user or user has no agent record, show agency data
+  if (window.db && currentUser && currentUser.uid) {
     try {
-      var agSnap = await db.ref('agents/' + agentIdToLookup).once('value');
+      var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
       var agData = agSnap.val();
       if (agData) {
         if (agData.name) agName = agData.name;
@@ -1837,9 +1839,9 @@ async function exportPropPDF(prop) {
     } catch(e) {}
   }
 
-  var photos = (prop.photos||[]).filter(function(p){ return p && (p.startsWith('http') || p.startsWith('data:')); }).slice(0,3);
-  var photosHtml = photos.length ? '<div style="display:flex;gap:8px;margin-top:12px">' +
-    photos.map(function(p){ return '<img src="'+p+'" style="flex:1;min-width:0;height:140px;object-fit:cover;border-radius:6px;border:1px solid #dce0e8">'; }).join('') +
+  var photos = (prop.photos||[]).filter(function(p){ return p && (p.startsWith('http') || p.startsWith('data:')); });
+  var photosHtml = photos.length ? '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">' +
+    photos.map(function(p){ return '<img src="'+p+'" style="width:100%;height:160px;object-fit:cover;border-radius:6px;border:1px solid #dce0e8">'; }).join('') +
     '</div>' : '';
 
   var specs = [
