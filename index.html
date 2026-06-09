@@ -1055,32 +1055,21 @@ function openPropDetail(id) {
     var cb = document.getElementById('prop-contact-btn');
     if(cb) cb.onclick = function(){
       var agName = 'InmuebleHoy Realty';
-      var agPhone = '4921412672'; // agency default
+      var agPhone = '4921412672';
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       if (p.agentId && window.db) {
-        // Try allAgents cache first
-        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-        if (ag) {
-          agPhone = ag.phone || agPhone;
-          agName = ag.name || agName;
+        // Always fetch agent data directly from Firebase (rules now allow public read)
+        db.ref('agents/' + p.agentId).once('value', function(snap) {
+          var d = snap.val();
+          if (d) {
+            if (d.name) agName = d.name;
+            var ph = (d.phone || '').toString().replace(/[^0-9]/g, '');
+            if (ph.length >= 10) agPhone = ph;
+          }
           CM('mprop');
           openAgentContact(agName, agPhone, p.title, propPhoto);
-        } else {
-          // Fetch directly from Firebase
-          db.ref('agents/' + p.agentId).once('value', function(snap) {
-            var agData = snap.val();
-            if (agData && agData.phone) {
-              agPhone = agData.phone;
-              agName = agData.name || agName;
-            }
-            // If admin assigned (no agent record), keep agency phone
-            CM('mprop');
-            openAgentContact(agName, agPhone, p.title, propPhoto);
-          });
-          return; // wait for async
-        }
+        });
       } else {
-        // No agent assigned — contact agency directly
         CM('mprop');
         openAgentContact(agName, agPhone, p.title, propPhoto);
       }
