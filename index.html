@@ -1058,13 +1058,14 @@ function openPropDetail(id) {
       var agPhone = '4921412672';
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       if (p.agentId && window.db) {
-        // Scan all agents to find the one matching agentId (handles key mismatches)
+        // Scan all agents — use ASCII-only comparison to handle invisible unicode chars
+        var cleanAgentId = p.agentId.replace(/[^a-zA-Z0-9]/g, '');
         db.ref('agents').once('value', function(snap) {
           snap.forEach(function(c) {
             var d = c.val();
             if (!d) return;
-            // Match by exact key or by key starting with same chars (truncation fix)
-            if (c.key === p.agentId || c.key.startsWith(p.agentId) || p.agentId.startsWith(c.key)) {
+            var cleanKey = c.key.replace(/[^a-zA-Z0-9]/g, '');
+            if (cleanKey === cleanAgentId) {
               if (d.name) agName = d.name;
               var ph = (d.phone || '').toString().replace(/[^0-9]/g, '');
               if (ph.length >= 10) agPhone = ph;
