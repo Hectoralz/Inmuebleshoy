@@ -1059,18 +1059,20 @@ function openPropDetail(id) {
             CM('mprop');
             openAgentContact(agName, agPhone, p.title, propPhoto);
           } else {
-            // Not found by UID — scan all agents to find one whose key or uid matches
+            // Not found by UID — scan ALL agents, show keys in toast for debug
             db.ref('agents').once('value', function(allSnap) {
+              var keys = [];
               allSnap.forEach(function(c) {
                 var d = c.val();
                 if (!d) return;
-                // Match by key OR by stored uid field
+                keys.push(c.key + '=' + (d.name||'?'));
                 if (c.key === p.agentId || (d.uid && d.uid === p.agentId)) {
                   agName = d.name || agName;
                   var rawPhone = (d.phone || '').toString().replace(/[^0-9]/g, '');
                   if (rawPhone.length >= 10) agPhone = rawPhone;
                 }
               });
+              showToast('keys: ' + keys.join(' | '), '');
               CM('mprop');
               openAgentContact(agName, agPhone, p.title, propPhoto);
             });
