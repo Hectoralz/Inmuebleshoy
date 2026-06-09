@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-09b -->
+<html lang="es"><!-- build:2026-06-09c -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1825,16 +1825,25 @@ async function exportPropPDF(prop) {
   var agName = 'InmuebleHoy Realty';
   var agEmail = 'info@inmuebleshoy.com';
   var agPhone = '492 141 2672';
-  // PDF always shows data of the person generating it (currentUser), NOT the assigned agent
-  // If no logged-in user or user has no agent record, show agency data
-  if (window.db && currentUser && currentUser.uid) {
+  // PDF shows data of the person generating it (currentUser)
+  if (window.db && currentUser) {
     try {
+      // First try by UID (for agents created via createUserWithEmailAndPassword)
       var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
       var agData = agSnap.val();
       if (agData) {
         if (agData.name) agName = agData.name;
         if (agData.email) agEmail = agData.email;
         if (agData.phone) agPhone = agData.phone;
+      } else {
+        // Fallback: find agent by email (for agents created with admin-set UID)
+        var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
+        allAgSnap.forEach(function(c) {
+          var d = c.val();
+          if (d.name) agName = d.name;
+          if (d.email) agEmail = d.email;
+          if (d.phone) agPhone = d.phone;
+        });
       }
     } catch(e) {}
   }
