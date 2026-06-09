@@ -887,12 +887,14 @@ function renderAgents(ags) {
   }).join('');
 }
 function renderStaticContent() {
-  document.getElementById('zones-grid').innerHTML = ZONES.map(z =>
+  const zonesEl = document.getElementById('zones-grid');
+  if (zonesEl) zonesEl.innerHTML = ZONES.map(z =>
     `<div class="zcard" style="background:${z.color}" onclick="qs('${escAttr(z.name)}')">
       <div class="zov"><div class="zn">${escHtml(z.name)}</div><div class="zc">${z.count}</div></div>
     </div>`
   ).join('');
-  document.getElementById('blog-grid').innerHTML = POSTS.map(p =>
+  const blogEl = document.getElementById('blog-grid');
+  if (blogEl) blogEl.innerHTML = POSTS.map(p =>
     `<div class="bcard2">
       <div class="bimg2"><svg viewBox="0 0 24 24" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span class="btag2">${escHtml(p.tag)}</span></div>
       <div class="bbody2"><div class="bdate2">${escHtml(p.date)}</div><div class="btitle2">${escHtml(p.title)}</div><div class="bexc2">${escHtml(p.excerpt)}</div></div>
