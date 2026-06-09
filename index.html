@@ -705,6 +705,7 @@ const CLD = {
 // ── ESTADO ──
 let db = null, auth = null, currentUser = null, currentRole = null;
 let allProps = [], allAgents = [], pendingPhotos = [], agentPhotoFile = null, editingPropId = null;
+window.allAgents = allAgents;
 let favs = JSON.parse(localStorage.getItem('ih_favs') || '{}');
 
 // ── INIT ──
@@ -780,7 +781,7 @@ function loadPublicData() {
   db.ref('agents').on('value', snap => {
     const ags = [];
     snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
-    allAgents = ags;
+    allAgents = ags; window.allAgents = ags;
     renderAgents(ags.length ? ags : DEMO_AGENTS);
   }, () => renderAgents(DEMO_AGENTS));
 }
@@ -1047,22 +1048,33 @@ function openPropDetail(id) {
       var agName = 'InmuebleHoy Realty';
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
-      if (p.agentId) {
-        // Use agentName/agentPhone stored directly on property (no auth needed)
-        if (p.agentName) agName = p.agentName;
-        if (p.agentPhone && p.agentPhone.length >= 10) agPhone = p.agentPhone;
-        else {
-          // Fallback: try allAgents cache
-          var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-          if (ag) {
-            agName = ag.name || agName;
-            var rawPhone = (ag.phone || '').toString().replace(/[^0-9]/g, '');
-            if (rawPhone.length >= 10) agPhone = rawPhone;
-          }
+      if (p.agentId && window.db) {
+        // Try allAgents cache first
+        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
+        if (ag) {
+          agPhone = ag.phone || agPhone;
+          agName = ag.name || agName;
+          CM('mprop');
+          openAgentContact(agName, agPhone, p.title, propPhoto);
+        } else {
+          // Fetch directly from Firebase
+          db.ref('agents/' + p.agentId).once('value', function(snap) {
+            var agData = snap.val();
+            if (agData && agData.phone) {
+              agPhone = agData.phone;
+              agName = agData.name || agName;
+            }
+            // If admin assigned (no agent record), keep agency phone
+            CM('mprop');
+            openAgentContact(agName, agPhone, p.title, propPhoto);
+          });
+          return; // wait for async
         }
+      } else {
+        // No agent assigned — contact agency directly
+        CM('mprop');
+        openAgentContact(agName, agPhone, p.title, propPhoto);
       }
-      CM('mprop');
-      openAgentContact(agName, agPhone, p.title, propPhoto);
     };
     var fb = document.getElementById('prop-fav-btn');
     if(fb) fb.onclick = function(){ toggleFav(null, p.id); };
@@ -1271,9 +1283,6 @@ function openAgentPublish() {
   document.body.style.overflow = 'hidden';
   // Hide only admin-only tabs
   document.querySelectorAll('.adm-only').forEach(function(el){ el.style.display = 'none'; });
-  // Always show agent selector for agents (locked to themselves)
-  var fgAgentEl = document.getElementById('fg-agent');
-  if (fgAgentEl) fgAgentEl.style.display = '';
   // Start on Mis Propiedades tab
   showAT('at-props', document.querySelectorAll('.atab')[0]);
   loadAllAdminData();
@@ -1339,35 +1348,10 @@ function showAT(id, btn) {
     // Only load agent select if it has no options yet (avoid resetting user's selection)
     var sel = document.getElementById('pf-agent');
     if (sel && sel.options.length <= 1) loadAgentSelect();
-    // Show/hide agent selector
+    // Show/hide agent selector based on role (don't override if editProp already set it)
     if (!wasEditing) {
       var fgAgent = document.getElementById('fg-agent');
-      if (fgAgent) {
-        if (currentRole === 'admin') {
-          fgAgent.style.display = '';
-        } else if (currentRole === 'agent' && currentUser) {
-          // Agents can see the selector but it just shows their own name (auto-assigned)
-          fgAgent.style.display = '';
-          var agSel = document.getElementById('pf-agent');
-          if (agSel) {
-            if (!agSel.querySelector('option[value="' + currentUser.uid + '"]')) {
-              // Load their own name
-              db.ref('agents/' + currentUser.uid).once('value', function(s) {
-                var d = s.val();
-                var label = d && d.name ? d.name : currentUser.email;
-                agSel.innerHTML = '<option value="' + currentUser.uid + '">' + escHtml(label) + '</option>';
-                agSel.value = currentUser.uid;
-                agSel.disabled = true;
-              });
-            } else {
-              agSel.value = currentUser.uid;
-              agSel.disabled = true;
-            }
-          }
-        } else {
-          fgAgent.style.display = 'none';
-        }
-      }
+      if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
     }
   }
 }
@@ -1425,11 +1409,11 @@ function loadAgentsList() {
     snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
     if (!ags.length) { el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay agentes registrados aún.</p>'; return; }
     el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
-      <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Zona</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Telefono</th><th>Zona</th><th>Acciones</th></tr></thead>
       <tbody>${ags.map(a => `<tr>
         <td style="font-weight:600">${escHtml(a.name||'')}</td>
         <td>${escHtml(a.email||'')}</td>
-        <td id="phone-cell-${escAttr(a.id)}">${escHtml(a.phone||'—')}&nbsp;<button style="font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--gr);color:var(--gr);background:transparent;cursor:pointer" onclick="editAgentPhone('${escAttr(a.id)}','${escAttr(a.phone||'')}','${escAttr(a.name||'')}')" title="Editar teléfono">✏️</button></td>
+        <td>${escHtml(a.phone||'—')}</td>
         <td>${escHtml(a.zone||'—')}</td>
         <td><button class="bdel" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name||'')}')">🗑 Eliminar</button></td>
       </tr>`).join('')}</tbody>
@@ -1515,17 +1499,6 @@ async function deleteAgent(id, name) {
   loadAgentsList();
 }
 
-function editAgentPhone(id, currentPhone, agentName) {
-  var newPhone = prompt('Telefono de ' + agentName + ' (10 digitos):', currentPhone || '');
-  if (newPhone === null) return;
-  var clean = (newPhone || '').replace(/[^0-9]/g, '');
-  if (clean.length > 0 && clean.length < 10) { showToast('El telefono debe tener 10 digitos', 'err'); return; }
-  db.ref('agents/' + id).update({ phone: clean }).then(function() {
-    showToast('Telefono actualizado', 'ok');
-    loadAgentsList();
-  }).catch(function(e) { showToast('Error: ' + e.message, 'err'); });
-}
-
 // ── SAVE PROPERTY ──
 function showSaveSuccess(title, action) {
   var ov = document.createElement('div');
@@ -1570,20 +1543,6 @@ async function saveProp() {
   btn.innerHTML = '<span class="spin"></span> Guardando…';
   try {
     const photos = await uploadPendingPhotos();
-    const _agentId = currentRole === 'admin' ? document.getElementById('pf-agent').value : document.getElementById('pf-agent').value || (currentUser ? currentUser.uid : '');
-    // Snapshot agent name+phone directly into the property so public visitors can read them without auth
-    let _agentName = '', _agentPhone = '';
-    if (_agentId) {
-      const _agInCache = (window.allAgents || []).find(a => a.id === _agentId);
-      if (_agInCache) { _agentName = _agInCache.name || ''; _agentPhone = (_agInCache.phone || '').toString().replace(/[^0-9]/g,''); }
-      else {
-        try {
-          const _agSnap = await db.ref('agents/' + _agentId).once('value');
-          const _agD = _agSnap.val();
-          if (_agD) { _agentName = _agD.name || ''; _agentPhone = (_agD.phone || '').toString().replace(/[^0-9]/g,''); }
-        } catch(e) {}
-      }
-    }
     const data = {
       title, price, city,
       zone: document.getElementById('pf-zone').value.trim(),
@@ -1598,9 +1557,7 @@ async function saveProp() {
       parking: parseInt(document.getElementById('pf-parking').value) || 0,
       desc:  document.getElementById('pf-desc').value.trim(),
       photos,
-      agentId: _agentId,
-      agentName: _agentName,
-      agentPhone: _agentPhone,
+      agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : document.getElementById('pf-agent').value || (currentUser ? currentUser.uid : ''),
       updatedAt: Date.now(),
     };
     if (!db) throw new Error('Firebase no configurado.');
@@ -1897,41 +1854,35 @@ async function exportPropPDF(prop) {
   if (window.db && currentUser) {
     try {
       var foundAgent = false;
-      // 1) Try by UID directly
+      // First try by UID (for agents created via createUserWithEmailAndPassword)
       var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
       var agData = agSnap.val();
-      if (agData && agData.name) {
+      if (agData) {
         foundAgent = true;
-        agName  = agData.name;
-        agEmail = agData.email || currentUser.email || agEmail;
-        agPhone = agData.phone || agPhone;
-      }
-      // 2) If not found by UID, search all agents by email OR UID match
-      if (!foundAgent) {
-        var allAgSnap = await db.ref('agents').once('value');
+        if (agData.name) agName = agData.name;
+        if (agData.email) agEmail = agData.email;
+        if (agData.phone) agPhone = agData.phone;
+      } else {
+        // Fallback: find agent by email (for agents created with admin-set UID)
+        var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
         allAgSnap.forEach(function(c) {
           var d = c.val();
-          if (!d || foundAgent) return;
-          var emailMatch = d.email && currentUser.email && d.email.toLowerCase() === currentUser.email.toLowerCase();
-          var uidMatch = c.key === currentUser.uid || (d.uid && d.uid === currentUser.uid);
-          if (emailMatch || uidMatch) {
-            foundAgent = true;
-            agName  = d.name  || agName;
-            agEmail = d.email || agEmail;
-            agPhone = (d.phone || '').toString().replace(/[^0-9]/g,'') || agPhone;
-          }
+          foundAgent = true;
+          if (d.name) agName = d.name;
+          if (d.email) agEmail = d.email;
+          if (d.phone) agPhone = d.phone;
         });
       }
-      // 3) If still not found (admin generating PDF), use auth email
-      if (!foundAgent) {
-        agEmail = currentUser.email || agEmail;
+      // If admin (no agent record), use their auth email + agency defaults
+      if (!foundAgent && currentUser.email) {
+        agEmail = currentUser.email;
         if (isAdmin(currentUser.email)) {
-          agName  = 'Hector Alaniz';
+          agName = 'Hector Alaniz';
           agPhone = '492 141 2672';
         }
       }
     } catch(e) {
-      if (currentUser && currentUser.email) agEmail = currentUser.email;
+      if (currentUser.email) agEmail = currentUser.email;
     }
   }
 
