@@ -1556,16 +1556,18 @@ async function saveProp() {
       updatedAt: Date.now(),
     };
     if (!db) throw new Error('Firebase no configurado.');
+    // Force Firebase to reconnect in case connection dropped after first write
+    firebase.database().goOnline();
     const _was = editingPropId;
-    if (_was) {
-      await db.ref('properties/' + _was).update(data);
-    } else {
-      data.createdAt = Date.now();
-      await db.ref('properties').push(data);
-    }
+    const writePromise = _was
+      ? db.ref('properties/' + _was).update(data)
+      : (function(){ data.createdAt = Date.now(); return db.ref('properties').push(data); })();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Tiempo de espera. Intenta de nuevo.')), 15000)
+    );
+    await Promise.race([writePromise, timeoutPromise]);
     cancelEdit();
     showSaveSuccess(title, _was ? 'actualizada' : 'publicada');
-    // Reload props list so Edit buttons work again without page refresh
     loadPropsList();
   } catch(e) {
     msgEl.innerHTML = `<div class="merr">Error: ${escHtml(e.message)}</div>`;
