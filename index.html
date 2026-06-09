@@ -1048,27 +1048,19 @@ function openPropDetail(id) {
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       if (p.agentId && window.db) {
-        // Try allAgents cache first
-        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-        if (ag) {
-          agPhone = ag.phone || agPhone;
-          agName = ag.name || agName;
+        // Always fetch directly from Firebase to get latest agent data (phone, name)
+        db.ref('agents/' + p.agentId).once('value', function(snap) {
+          var agData = snap.val();
+          if (agData) {
+            agName = agData.name || agName;
+            // phone can be stored with or without formatting
+            var rawPhone = (agData.phone || '').toString().replace(/[^0-9]/g, '');
+            if (rawPhone.length >= 10) agPhone = rawPhone;
+          }
           CM('mprop');
           openAgentContact(agName, agPhone, p.title, propPhoto);
-        } else {
-          // Fetch directly from Firebase
-          db.ref('agents/' + p.agentId).once('value', function(snap) {
-            var agData = snap.val();
-            if (agData && agData.phone) {
-              agPhone = agData.phone;
-              agName = agData.name || agName;
-            }
-            // If admin assigned (no agent record), keep agency phone
-            CM('mprop');
-            openAgentContact(agName, agPhone, p.title, propPhoto);
-          });
-          return; // wait for async
-        }
+        });
+        return; // async — do not fall through
       } else {
         // No agent assigned — contact agency directly
         CM('mprop');
@@ -1853,35 +1845,40 @@ async function exportPropPDF(prop) {
   if (window.db && currentUser) {
     try {
       var foundAgent = false;
-      // First try by UID (for agents created via createUserWithEmailAndPassword)
+      // 1) Try by UID directly
       var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
       var agData = agSnap.val();
-      if (agData) {
+      if (agData && agData.name) {
         foundAgent = true;
-        if (agData.name) agName = agData.name;
-        if (agData.email) agEmail = agData.email;
-        if (agData.phone) agPhone = agData.phone;
-      } else {
-        // Fallback: find agent by email (for agents created with admin-set UID)
-        var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
+        agName  = agData.name;
+        agEmail = agData.email || currentUser.email || agEmail;
+        agPhone = agData.phone || agPhone;
+      }
+      // 2) If not found by UID, search all agents by email
+      if (!foundAgent) {
+        var allAgSnap = await db.ref('agents').once('value');
         allAgSnap.forEach(function(c) {
           var d = c.val();
-          foundAgent = true;
-          if (d.name) agName = d.name;
-          if (d.email) agEmail = d.email;
-          if (d.phone) agPhone = d.phone;
+          if (!d) return;
+          var emailMatch = d.email && currentUser.email && d.email.toLowerCase() === currentUser.email.toLowerCase();
+          if (emailMatch && !foundAgent) {
+            foundAgent = true;
+            agName  = d.name  || agName;
+            agEmail = d.email || agEmail;
+            agPhone = d.phone || agPhone;
+          }
         });
       }
-      // If admin (no agent record), use their auth email + agency defaults
-      if (!foundAgent && currentUser.email) {
-        agEmail = currentUser.email;
+      // 3) If still not found (admin generating PDF), use auth email
+      if (!foundAgent) {
+        agEmail = currentUser.email || agEmail;
         if (isAdmin(currentUser.email)) {
-          agName = 'Hector Alaniz';
+          agName  = 'Hector Alaniz';
           agPhone = '492 141 2672';
         }
       }
     } catch(e) {
-      if (currentUser.email) agEmail = currentUser.email;
+      if (currentUser && currentUser.email) agEmail = currentUser.email;
     }
   }
 
