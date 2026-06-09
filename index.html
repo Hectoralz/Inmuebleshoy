@@ -1044,32 +1044,35 @@ function openPropDetail(id) {
   setTimeout(function(){
     var cb = document.getElementById('prop-contact-btn');
     if(cb) cb.onclick = function(){
-      var agName = 'Agente InmuebleHoy';
-      var agPhone = '';
-      if (p.agentId) {
+      var agName = 'InmuebleHoy Realty';
+      var agPhone = '4921412672'; // agency default
+      var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
+      if (p.agentId && window.db) {
+        // Try allAgents cache first
         var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-        if (ag && ag.phone) {
-          agPhone = ag.phone;
+        if (ag) {
+          agPhone = ag.phone || agPhone;
           agName = ag.name || agName;
           CM('mprop');
-          openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
-        } else if (window.db) {
+          openAgentContact(agName, agPhone, p.title, propPhoto);
+        } else {
+          // Fetch directly from Firebase
           db.ref('agents/' + p.agentId).once('value', function(snap) {
             var agData = snap.val();
-            if (agData) {
-              agPhone = agData.phone || '';
+            if (agData && agData.phone) {
+              agPhone = agData.phone;
               agName = agData.name || agName;
             }
+            // If admin assigned (no agent record), keep agency phone
             CM('mprop');
-            openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
+            openAgentContact(agName, agPhone, p.title, propPhoto);
           });
-        } else {
-          CM('mprop');
-          openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
+          return; // wait for async
         }
       } else {
+        // No agent assigned — contact agency directly
         CM('mprop');
-        openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
+        openAgentContact(agName, agPhone, p.title, propPhoto);
       }
     };
     var fb = document.getElementById('prop-fav-btn');
@@ -1339,13 +1342,16 @@ function showAT(id, btn) {
       ['pf-title','pf-price','pf-city','pf-zone','pf-address','pf-desc'].forEach(function(fid){ var el=document.getElementById(fid); if(el) el.value=''; });
       var csel = document.getElementById('pf-city-sel'); if(csel) csel.value='';
     }
+    var wasEditing = window._editingViaButton;
     window._editingViaButton = false;
     // Only load agent select if it has no options yet (avoid resetting user's selection)
     var sel = document.getElementById('pf-agent');
     if (sel && sel.options.length <= 1) loadAgentSelect();
-    // Show/hide agent selector based on role
-    var fgAgent = document.getElementById('fg-agent');
-    if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
+    // Show/hide agent selector based on role (don't override if editProp already set it)
+    if (!wasEditing) {
+      var fgAgent = document.getElementById('fg-agent');
+      if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
+    }
   }
 }
 function loadAllAdminData() {
@@ -1465,14 +1471,6 @@ function editProp(id) {
     var pubTab = null;
     tabs.forEach(function(t){ if(t.getAttribute('onclick') && t.getAttribute('onclick').indexOf('at-addprop') > -1) pubTab = t; });
     showAT('at-addprop', pubTab || tabs[0]);
-    // Hide agent selector for non-admins
-    if (currentRole !== 'admin') {
-      var fgAgent2 = document.getElementById('fg-agent');
-      if (fgAgent2) fgAgent2.style.display = 'none';
-    }
-    document.getElementById('prop-form-title').textContent = 'Editar propiedad';
-    document.getElementById('btn-saveprop').textContent = '💾 Actualizar propiedad';
-    document.getElementById('btn-canceledit').style.display = 'inline-block';
     showToast('Editando: ' + p.title, 'ok');
   });
 }
@@ -1854,10 +1852,12 @@ async function exportPropPDF(prop) {
   // PDF shows data of the person generating it (currentUser)
   if (window.db && currentUser) {
     try {
+      var foundAgent = false;
       // First try by UID (for agents created via createUserWithEmailAndPassword)
       var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
       var agData = agSnap.val();
       if (agData) {
+        foundAgent = true;
         if (agData.name) agName = agData.name;
         if (agData.email) agEmail = agData.email;
         if (agData.phone) agPhone = agData.phone;
@@ -1866,12 +1866,23 @@ async function exportPropPDF(prop) {
         var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
         allAgSnap.forEach(function(c) {
           var d = c.val();
+          foundAgent = true;
           if (d.name) agName = d.name;
           if (d.email) agEmail = d.email;
           if (d.phone) agPhone = d.phone;
         });
       }
-    } catch(e) {}
+      // If admin (no agent record), use their auth email + agency defaults
+      if (!foundAgent && currentUser.email) {
+        agEmail = currentUser.email;
+        if (isAdmin(currentUser.email)) {
+          agName = 'Hector Alaniz';
+          agPhone = '492 141 2672';
+        }
+      }
+    } catch(e) {
+      if (currentUser.email) agEmail = currentUser.email;
+    }
   }
 
   // Keep photos in exact published order
