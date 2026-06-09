@@ -1047,22 +1047,22 @@ function openPropDetail(id) {
       var agName = 'InmuebleHoy Realty';
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
+      showToast('agentId: ' + (p.agentId || 'VACIO'), '');
       if (p.agentId && window.db) {
         // Always fetch directly from Firebase to get latest agent data (phone, name)
         db.ref('agents/' + p.agentId).once('value', function(snap) {
           var agData = snap.val();
+          showToast('agData: ' + JSON.stringify(agData ? {name:agData.name,phone:agData.phone} : null), '');
           if (agData) {
             agName = agData.name || agName;
-            // phone can be stored with or without formatting
             var rawPhone = (agData.phone || '').toString().replace(/[^0-9]/g, '');
             if (rawPhone.length >= 10) agPhone = rawPhone;
           }
           CM('mprop');
           openAgentContact(agName, agPhone, p.title, propPhoto);
         });
-        return; // async — do not fall through
+        return;
       } else {
-        // No agent assigned — contact agency directly
         CM('mprop');
         openAgentContact(agName, agPhone, p.title, propPhoto);
       }
