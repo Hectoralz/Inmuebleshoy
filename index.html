@@ -1339,10 +1339,35 @@ function showAT(id, btn) {
     // Only load agent select if it has no options yet (avoid resetting user's selection)
     var sel = document.getElementById('pf-agent');
     if (sel && sel.options.length <= 1) loadAgentSelect();
-    // Show/hide agent selector based on role (don't override if editProp already set it)
+    // Show/hide agent selector
     if (!wasEditing) {
       var fgAgent = document.getElementById('fg-agent');
-      if (fgAgent) fgAgent.style.display = currentRole === 'admin' ? '' : 'none';
+      if (fgAgent) {
+        if (currentRole === 'admin') {
+          fgAgent.style.display = '';
+        } else if (currentRole === 'agent' && currentUser) {
+          // Agents can see the selector but it just shows their own name (auto-assigned)
+          fgAgent.style.display = '';
+          var agSel = document.getElementById('pf-agent');
+          if (agSel) {
+            if (!agSel.querySelector('option[value="' + currentUser.uid + '"]')) {
+              // Load their own name
+              db.ref('agents/' + currentUser.uid).once('value', function(s) {
+                var d = s.val();
+                var label = d && d.name ? d.name : currentUser.email;
+                agSel.innerHTML = '<option value="' + currentUser.uid + '">' + escHtml(label) + '</option>';
+                agSel.value = currentUser.uid;
+                agSel.disabled = true;
+              });
+            } else {
+              agSel.value = currentUser.uid;
+              agSel.disabled = true;
+            }
+          }
+        } else {
+          fgAgent.style.display = 'none';
+        }
+      }
     }
   }
 }
@@ -1400,11 +1425,11 @@ function loadAgentsList() {
     snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
     if (!ags.length) { el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay agentes registrados aún.</p>'; return; }
     el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
-      <thead><tr><th>Nombre</th><th>Correo</th><th>Telefono</th><th>Zona</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Zona</th><th>Acciones</th></tr></thead>
       <tbody>${ags.map(a => `<tr>
         <td style="font-weight:600">${escHtml(a.name||'')}</td>
         <td>${escHtml(a.email||'')}</td>
-        <td>${escHtml(a.phone||'—')}</td>
+        <td id="phone-cell-${escAttr(a.id)}">${escHtml(a.phone||'—')}&nbsp;<button style="font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--gr);color:var(--gr);background:transparent;cursor:pointer" onclick="editAgentPhone('${escAttr(a.id)}','${escAttr(a.phone||'')}','${escAttr(a.name||'')}')" title="Editar teléfono">✏️</button></td>
         <td>${escHtml(a.zone||'—')}</td>
         <td><button class="bdel" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name||'')}')">🗑 Eliminar</button></td>
       </tr>`).join('')}</tbody>
@@ -1488,6 +1513,17 @@ async function deleteAgent(id, name) {
   await db.ref('agents/' + id).remove();
   showToast('Agente eliminado', 'ok');
   loadAgentsList();
+}
+
+function editAgentPhone(id, currentPhone, agentName) {
+  var newPhone = prompt('Telefono de ' + agentName + ' (10 digitos):', currentPhone || '');
+  if (newPhone === null) return;
+  var clean = (newPhone || '').replace(/[^0-9]/g, '');
+  if (clean.length > 0 && clean.length < 10) { showToast('El telefono debe tener 10 digitos', 'err'); return; }
+  db.ref('agents/' + id).update({ phone: clean }).then(function() {
+    showToast('Telefono actualizado', 'ok');
+    loadAgentsList();
+  }).catch(function(e) { showToast('Error: ' + e.message, 'err'); });
 }
 
 // ── SAVE PROPERTY ──
