@@ -1047,19 +1047,34 @@ function openPropDetail(id) {
       var agName = 'InmuebleHoy Realty';
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
-      showToast('agentId: ' + (p.agentId || 'VACIO'), '');
       if (p.agentId && window.db) {
-        // Always fetch directly from Firebase to get latest agent data (phone, name)
+        // Try by UID first, then scan all agents for matching UID key
         db.ref('agents/' + p.agentId).once('value', function(snap) {
           var agData = snap.val();
-          showToast('agData: ' + JSON.stringify(agData ? {name:agData.name,phone:agData.phone} : null), '');
-          if (agData) {
+          if (agData && agData.name) {
+            // Found by UID
             agName = agData.name || agName;
             var rawPhone = (agData.phone || '').toString().replace(/[^0-9]/g, '');
             if (rawPhone.length >= 10) agPhone = rawPhone;
+            CM('mprop');
+            openAgentContact(agName, agPhone, p.title, propPhoto);
+          } else {
+            // Not found by UID — scan all agents to find one whose key or uid matches
+            db.ref('agents').once('value', function(allSnap) {
+              allSnap.forEach(function(c) {
+                var d = c.val();
+                if (!d) return;
+                // Match by key OR by stored uid field
+                if (c.key === p.agentId || (d.uid && d.uid === p.agentId)) {
+                  agName = d.name || agName;
+                  var rawPhone = (d.phone || '').toString().replace(/[^0-9]/g, '');
+                  if (rawPhone.length >= 10) agPhone = rawPhone;
+                }
+              });
+              CM('mprop');
+              openAgentContact(agName, agPhone, p.title, propPhoto);
+            });
           }
-          CM('mprop');
-          openAgentContact(agName, agPhone, p.title, propPhoto);
         });
         return;
       } else {
@@ -1274,6 +1289,9 @@ function openAgentPublish() {
   document.body.style.overflow = 'hidden';
   // Hide only admin-only tabs
   document.querySelectorAll('.adm-only').forEach(function(el){ el.style.display = 'none'; });
+  // Always show agent selector for agents (locked to themselves)
+  var fgAgentEl = document.getElementById('fg-agent');
+  if (fgAgentEl) fgAgentEl.style.display = '';
   // Start on Mis Propiedades tab
   showAT('at-props', document.querySelectorAll('.atab')[0]);
   loadAllAdminData();
@@ -1890,18 +1908,19 @@ async function exportPropPDF(prop) {
         agEmail = agData.email || currentUser.email || agEmail;
         agPhone = agData.phone || agPhone;
       }
-      // 2) If not found by UID, search all agents by email
+      // 2) If not found by UID, search all agents by email OR UID match
       if (!foundAgent) {
         var allAgSnap = await db.ref('agents').once('value');
         allAgSnap.forEach(function(c) {
           var d = c.val();
-          if (!d) return;
+          if (!d || foundAgent) return;
           var emailMatch = d.email && currentUser.email && d.email.toLowerCase() === currentUser.email.toLowerCase();
-          if (emailMatch && !foundAgent) {
+          var uidMatch = c.key === currentUser.uid || (d.uid && d.uid === currentUser.uid);
+          if (emailMatch || uidMatch) {
             foundAgent = true;
             agName  = d.name  || agName;
             agEmail = d.email || agEmail;
-            agPhone = d.phone || agPhone;
+            agPhone = (d.phone || '').toString().replace(/[^0-9]/g,'') || agPhone;
           }
         });
       }
