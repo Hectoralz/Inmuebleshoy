@@ -1240,14 +1240,12 @@ async function doLogout() {
 function openAgentPublish() {
   // Agents get a simplified publish modal — no full admin panel
   if (!currentUser) { OM('mlogin'); return; }
-  // Pre-fill agent field with their own uid
+  // Pre-fill agent field — try UID first, then email
   const sel = document.getElementById('pf-agent');
-  if (sel) {
-    // Try to find the agent's own entry
+  if (sel && db) {
     db.ref('agents/' + currentUser.uid).once('value', snap => {
       if (snap.exists()) {
         const a = snap.val();
-        // Add their option if not exists
         let found = false;
         for (let o of sel.options) { if (o.value === currentUser.uid) { found = true; break; } }
         if (!found) {
@@ -1257,6 +1255,22 @@ function openAgentPublish() {
           sel.appendChild(opt);
         }
         sel.value = currentUser.uid;
+      } else {
+        // Fallback: find by email
+        db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value', snap2 => {
+          snap2.forEach(c => {
+            const a = c.val();
+            let found = false;
+            for (let o of sel.options) { if (o.value === c.key) { found = true; break; } }
+            if (!found) {
+              const opt = document.createElement('option');
+              opt.value = c.key;
+              opt.textContent = a.name || currentUser.email;
+              sel.appendChild(opt);
+            }
+            sel.value = c.key;
+          });
+        });
       }
     });
   }
@@ -1314,6 +1328,12 @@ function showAT(id, btn) {
   if (id === 'at-props') loadPropsList();
   if (id === 'at-agents') loadAgentsList();
   if (id === 'at-addprop') {
+    // Always reset button state
+    var btnSave = document.getElementById('btn-saveprop');
+    if (btnSave && !editingPropId) {
+      btnSave.disabled = false;
+      btnSave.textContent = '💾 Publicar propiedad';
+    }
     // If navigating to publish tab (not via editProp), reset edit mode
     if (!window._editingViaButton) {
       editingPropId = null;
@@ -1534,7 +1554,7 @@ async function saveProp() {
       parking: parseInt(document.getElementById('pf-parking').value) || 0,
       desc:  document.getElementById('pf-desc').value.trim(),
       photos,
-      agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : (currentUser ? currentUser.uid : ''),
+      agentId: currentRole === 'admin' ? document.getElementById('pf-agent').value : document.getElementById('pf-agent').value || (currentUser ? currentUser.uid : ''),
       updatedAt: Date.now(),
     };
     if (!db) throw new Error('Firebase no configurado.');
