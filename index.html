@@ -1045,31 +1045,29 @@ function openPropDetail(id) {
       var agName = 'Agente InmuebleHoy';
       var agPhone = '';
       if (p.agentId) {
-        // Try allAgents cache first
         var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-        if (ag) {
-          agPhone = ag.phone || '';
+        if (ag && ag.phone) {
+          agPhone = ag.phone;
           agName = ag.name || agName;
-          openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
           CM('mprop');
+          openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
         } else if (window.db) {
-          // Fetch directly from Firebase
           db.ref('agents/' + p.agentId).once('value', function(snap) {
             var agData = snap.val();
             if (agData) {
               agPhone = agData.phone || '';
               agName = agData.name || agName;
             }
+            CM('mprop');
             openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
           });
-          CM('mprop');
         } else {
-          openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
           CM('mprop');
+          openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
         }
       } else {
-        openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
         CM('mprop');
+        openAgentContact(agName, agPhone, p.title, p.photos && p.photos[0] ? p.photos[0] : '');
       }
     };
     var fb = document.getElementById('prop-fav-btn');
