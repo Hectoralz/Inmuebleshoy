@@ -783,7 +783,16 @@ function loadPublicData() {
     snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
     allAgents = ags; window.allAgents = ags;
     renderAgents(ags.length ? ags : DEMO_AGENTS);
-  }, () => renderAgents(DEMO_AGENTS));
+  }, (err) => {
+    console.warn('agents listener error:', err.code);
+    // On error, try a one-time read instead
+    db.ref('agents').once('value').then(snap => {
+      const ags = [];
+      snap.forEach(c => { const v = c.val(); if(v && v.name) ags.push({ id: c.key, ...v }); });
+      allAgents = ags; window.allAgents = ags;
+      renderAgents(ags.length ? ags : DEMO_AGENTS);
+    }).catch(() => renderAgents(DEMO_AGENTS));
+  });
 }
 
 function loadDemoData() {
