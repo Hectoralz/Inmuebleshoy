@@ -1047,37 +1047,30 @@ function openPropDetail(id) {
       var agName = 'InmuebleHoy Realty';
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
-      if (p.agentId && window.db) {
-        // Try by UID first, then scan all agents for matching UID key
-        db.ref('agents/' + p.agentId).once('value', function(snap) {
-          var agData = snap.val();
-          if (agData && agData.name) {
-            // Found by UID
-            agName = agData.name || agName;
-            var rawPhone = (agData.phone || '').toString().replace(/[^0-9]/g, '');
-            if (rawPhone.length >= 10) agPhone = rawPhone;
+      if (p.agentId) {
+        // Use allAgents cache - already loaded publicly at startup, no auth needed
+        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
+        if (ag) {
+          agName = ag.name || agName;
+          var rawPhone = (ag.phone || '').toString().replace(/[^0-9]/g, '');
+          if (rawPhone.length >= 10) agPhone = rawPhone;
+          CM('mprop');
+          openAgentContact(agName, agPhone, p.title, propPhoto);
+        } else if (window.db) {
+          db.ref('agents/' + p.agentId).once('value', function(snap) {
+            var d = snap.val();
+            if (d) {
+              agName = d.name || agName;
+              var rawPhone = (d.phone || '').toString().replace(/[^0-9]/g, '');
+              if (rawPhone.length >= 10) agPhone = rawPhone;
+            }
             CM('mprop');
             openAgentContact(agName, agPhone, p.title, propPhoto);
-          } else {
-            // Not found by UID — scan ALL agents, show keys in toast for debug
-            db.ref('agents').once('value', function(allSnap) {
-              var keys = [];
-              allSnap.forEach(function(c) {
-                var d = c.val();
-                if (!d) return;
-                keys.push(c.key + '=' + (d.name||'?'));
-                if (c.key === p.agentId || (d.uid && d.uid === p.agentId)) {
-                  agName = d.name || agName;
-                  var rawPhone = (d.phone || '').toString().replace(/[^0-9]/g, '');
-                  if (rawPhone.length >= 10) agPhone = rawPhone;
-                }
-              });
-              showToast('keys: ' + keys.join(' | '), '');
-              CM('mprop');
-              openAgentContact(agName, agPhone, p.title, propPhoto);
-            });
-          }
-        });
+          });
+        } else {
+          CM('mprop');
+          openAgentContact(agName, agPhone, p.title, propPhoto);
+        }
         return;
       } else {
         CM('mprop');
