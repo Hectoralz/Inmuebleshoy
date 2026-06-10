@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10j -->
+<html lang="es"><!-- build:2026-06-10k -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1620,17 +1620,22 @@ async function saveAgent() {
   msgEl.innerHTML = '';
   try {
     if (!auth) throw new Error('Firebase no configurado.');
-    // Crear usuario en Firebase Auth
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    // Use a secondary Firebase app instance so admin session is not displaced
+    const secondaryApp = firebase.apps.find(function(a){ return a.name === 'secondary'; }) ||
+      firebase.initializeApp(firebase.app().options, 'secondary');
+    const secondaryAuth = secondaryApp.auth();
+    const cred = await secondaryAuth.createUserWithEmailAndPassword(email, pass);
     const uid = cred.user.uid;
+    // Sign out from secondary app immediately — admin session untouched
+    await secondaryAuth.signOut();
     // Subir foto si hay
     let photoUrl = '';
     if (agentPhotoFile) {
       try { photoUrl = await uploadToCloudinary(agentPhotoFile, 'agents'); }
       catch(e) { console.warn('No se pudo subir foto del agente:', e.message); }
     }
-    // Guardar en DB
-    await db.ref('agents/' + uid).set({ name, zone, email, phone, photo: photoUrl, props: 0, years: 0, createdAt: Date.now() });
+    // Guardar en DB usando admin auth (currentUser sigue siendo admin)
+    await firebase.database().ref('agents/' + uid).set({ name, zone, email, phone, photo: photoUrl, props: 0, years: 0, createdAt: Date.now() });
     msgEl.innerHTML = `<div class="msuc">✅ Agente "${escHtml(name)}" creado correctamente.<br>Puede iniciar sesión con: <strong>${escHtml(email)}</strong></div>`;
     showToast('✅ Agente creado: ' + name, 'ok');
     ['af-name','af-zone','af-email','af-pass','af-phone'].forEach(id => document.getElementById(id).value = '');
