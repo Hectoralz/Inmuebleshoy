@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10b -->
+<html lang="es"><!-- build:2026-06-10c -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1333,8 +1333,9 @@ function showAT(id, btn) {
     var wasEditing = window._editingViaButton;
     window._editingViaButton = false;
     // Only load agent select if it has no options yet (avoid resetting user's selection)
+    // Skip entirely for agents — their select is locked and pre-filled by openAgentPublish
     var sel = document.getElementById('pf-agent');
-    if (sel && sel.options.length <= 1) loadAgentSelect();
+    if (sel && sel.options.length <= 1 && currentRole !== 'agent') loadAgentSelect();
     // Show agent selector for both admin and agents (agents get it locked to themselves)
     if (!wasEditing) {
       var fgAgent = document.getElementById('fg-agent');
@@ -1427,6 +1428,8 @@ function loadAgentsList() {
 
 function loadAgentSelect(preselectId) {
   if (!db) return;
+  // Agents have their select locked to themselves — don't overwrite it
+  if (currentRole === 'agent') return;
   db.ref('agents').once('value', snap => {
     const sel = document.getElementById('pf-agent');
     const opts = ['<option value="">— Sin asignar —</option>'];
