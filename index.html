@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10i -->
+<html lang="es"><!-- build:2026-06-10j -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1361,36 +1361,59 @@ function loadAllAdminData() {
 function loadPropsList() {
   const el = document.getElementById('adm-props-list');
   if (!el) return;
-  // Use allProps which is already loaded by loadPublicData's realtime listener
   function renderAdminProps() {
     const el2 = document.getElementById('adm-props-list');
     if (!el2) return;
     var allPropsRaw = allProps && allProps.length ? allProps : [];
-    var props = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
-    if (!props.length) {
-      el2.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
+    var basProps = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
+    // Get current search query if bar already exists
+    var q = '';
+    var existingInput = document.getElementById('adm-props-search');
+    if (existingInput) q = existingInput.value.toLowerCase().trim();
+    var props = q ? basProps.filter(function(p){
+      return (p.title||'').toLowerCase().includes(q) ||
+             (p.city||'').toLowerCase().includes(q) ||
+             (p.price||'').toLowerCase().includes(q) ||
+             (p.type||'').toLowerCase().includes(q) ||
+             (p.cat||'').toLowerCase().includes(q) ||
+             (p.zone||'').toLowerCase().includes(q);
+    }) : basProps;
+    // Build search bar + table
+    var searchBar = '<div style="margin-bottom:14px;position:relative">' +
+      '<input id="adm-props-search" type="text" placeholder="🔍  Buscar por título, ciudad, tipo, precio…" ' +
+      'value="' + escHtml(q) + '" ' +
+      'oninput="loadPropsList()" ' +
+      'style="width:100%;padding:9px 36px 9px 14px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:.2s" ' +
+      'onfocus="this.style.borderColor='var(--gr)'" onblur="this.style.borderColor='var(--g200)'">' +
+      (q ? '<button onclick="document.getElementById('adm-props-search').value='';loadPropsList()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--g400);line-height:1">×</button>' : '') +
+    '</div>';
+    if (!basProps.length) {
+      el2.innerHTML = searchBar + '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
       return;
     }
-    el2.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
-      <thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead>
-      <tbody>${props.map(p => `<tr>
-        <td style="font-weight:600">${escHtml(p.title)}</td>
-        <td><span class="bdg ${p.type==='venta'?'v':p.type==='renta'?'r':'d'}">${p.type}</span></td>
-        <td>${escHtml(p.price)}</td>
-        <td>${escHtml(p.city||'—')}</td>
-        <td>${(p.photos||[]).length}</td>
-        <td><button class="bedi" onclick="editProp('${escAttr(p.id)}')">Editar</button>${currentRole==='admin'?`<button class="bdel" onclick="deleteProp('${escAttr(p.id)}','${escAttr(p.title)}')">Eliminar</button>`:''}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
+    var tableOrEmpty = props.length
+      ? '<div style="overflow-x:auto"><table class="tbl">' +
+        '<thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead>' +
+        '<tbody>' + props.map(function(p){ return '<tr>' +
+          '<td style="font-weight:600">' + escHtml(p.title) + '</td>' +
+          '<td><span class="bdg ' + (p.type==='venta'?'v':p.type==='renta'?'r':'d') + '">' + p.type + '</span></td>' +
+          '<td>' + escHtml(p.price) + '</td>' +
+          '<td>' + escHtml(p.city||'—') + '</td>' +
+          '<td>' + (p.photos||[]).length + '</td>' +
+          '<td><button class="bedi" onclick="editProp('' + escAttr(p.id) + '')">Editar</button>' +
+          (currentRole==='admin' ? '<button class="bdel" onclick="deleteProp('' + escAttr(p.id) + '','' + escAttr(p.title) + '')">Eliminar</button>' : '') +
+          '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      : '<p style="font-size:13px;color:var(--g400);padding:12px 0">Sin resultados para <strong>' + escHtml(q) + '</strong></p>';
+    el2.innerHTML = searchBar + tableOrEmpty;
+    // Keep focus on search if user was typing
+    if (q) { var inp = document.getElementById('adm-props-search'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } }
   }
-  // If allProps already loaded, render immediately
   if (allProps && allProps.length) {
     renderAdminProps();
   } else {
     el.innerHTML = '<div class="spin"></div>';
   }
-  // Panel updates automatically because loadPublicData already has a realtime listener
-  // that calls renderGrids() — no duplicate watcher needed here
 }
 
 function loadAgentsList() {
