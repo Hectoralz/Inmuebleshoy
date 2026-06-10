@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10c -->
+<html lang="es"><!-- build:2026-06-10d -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1857,39 +1857,49 @@ async function exportPropPDF(prop) {
   var agName = 'InmuebleHoy Realty';
   var agEmail = 'info@inmuebleshoy.com';
   var agPhone = '492 141 2672';
-  // PDF always shows data of the currently logged-in user (currentUser), never the assigned agent.
-  if (window.db && currentUser) {
+  // PDF uses ONLY the currently logged-in user. Never prop.agentId.
+  var pdfUser = (window.auth && window.auth.currentUser) ? window.auth.currentUser : currentUser;
+  console.log('[PDF] pdfUser:', pdfUser ? pdfUser.email + ' uid:' + pdfUser.uid : 'NULL');
+  if (window.db && pdfUser) {
     try {
       var foundAgent = false;
-      // Try by UID first (agents created via createUserWithEmailAndPassword)
-      var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
+      // 1. Try by Firebase Auth UID
+      var agSnap = await db.ref('agents/' + pdfUser.uid).once('value');
       var agData = agSnap.val();
+      console.log('[PDF] agents/uid result:', agData);
       if (agData) {
         foundAgent = true;
         if (agData.name)  agName  = agData.name;
         if (agData.email) agEmail = agData.email;
         if (agData.phone) agPhone = agData.phone;
       } else {
-        // Fallback: find agent record by email
-        var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
+        // 2. Scan all agents and match by email
+        var allAgSnap = await db.ref('agents').once('value');
         allAgSnap.forEach(function(c) {
           var d = c.val();
-          foundAgent = true;
-          if (d.name)  agName  = d.name;
-          if (d.email) agEmail = d.email;
-          if (d.phone) agPhone = d.phone;
+          if (d && d.email && d.email.toLowerCase().trim() === pdfUser.email.toLowerCase().trim()) {
+            foundAgent = true;
+            if (d.name)  agName  = d.name;
+            if (d.email) agEmail = d.email;
+            if (d.phone) agPhone = d.phone;
+          }
         });
       }
-      // No agent record found → must be admin
+      console.log('[PDF] foundAgent:', foundAgent, 'name:', agName);
+      // 3. No agent record = admin
       if (!foundAgent) {
-        agEmail = currentUser.email;
-        if (isAdmin(currentUser.email)) {
+        agEmail = pdfUser.email;
+        if (isAdmin(pdfUser.email)) {
           agName  = 'Hector Alaniz';
           agPhone = '492 141 2672';
+        } else {
+          agName = pdfUser.email;
         }
       }
     } catch(e) {
-      if (currentUser.email) agEmail = currentUser.email;
+      console.error('[PDF] error:', e);
+      agEmail = pdfUser.email;
+      agName  = pdfUser.email;
     }
   }
 
