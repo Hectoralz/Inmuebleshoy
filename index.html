@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10h -->
+<html lang="es"><!-- build:2026-06-10i -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1332,31 +1332,21 @@ function showAT(id, btn) {
     }
     var wasEditing = window._editingViaButton;
     window._editingViaButton = false;
-    // Only load agent select if it has no options yet (avoid resetting user's selection)
-    // Skip entirely for agents — their select is locked and pre-filled by openAgentPublish
-    var sel = document.getElementById('pf-agent');
-    if (sel && sel.options.length <= 1 && currentRole !== 'agent') loadAgentSelect();
-    // Show agent selector for both admin and agents (agents get it locked to themselves)
-    if (!wasEditing) {
-      var fgAgent = document.getElementById('fg-agent');
-      if (fgAgent) {
-        fgAgent.style.display = '';
-        var agSelEl = document.getElementById('pf-agent');
-        if (currentRole === 'agent' && currentUser && agSelEl) {
-          agSelEl.disabled = true;
-          if (!agSelEl.querySelector('option[value="' + currentUser.uid + '"]') && db) {
-            db.ref('agents/' + currentUser.uid).once('value', function(s) {
-              var d = s.val();
-              agSelEl.innerHTML = '<option value="' + currentUser.uid + '">' + (d && d.name ? d.name : currentUser.email) + '</option>';
-              agSelEl.value = currentUser.uid;
-            });
-          } else if (agSelEl.querySelector('option[value="' + currentUser.uid + '"]')) {
-            agSelEl.value = currentUser.uid;
-          }
-        } else if (currentRole === 'admin' && agSelEl) {
-          agSelEl.disabled = false;
-        }
-      }
+    var fgAgent = document.getElementById('fg-agent');
+    var agSelEl = document.getElementById('pf-agent');
+    if (fgAgent) fgAgent.style.display = '';
+    if (currentRole === 'admin' && agSelEl) {
+      // Admin: always enabled, load all agents
+      agSelEl.disabled = false;
+      if (agSelEl.options.length <= 1) loadAgentSelect();
+    } else if (currentRole === 'agent' && currentUser && agSelEl) {
+      // Agent: locked to themselves always
+      agSelEl.disabled = true;
+      firebase.database().ref('agents/' + currentUser.uid).once('value', function(s) {
+        var d = s.val();
+        agSelEl.innerHTML = '<option value="' + currentUser.uid + '">' + (d && d.name ? d.name : currentUser.email) + '</option>';
+        agSelEl.value = currentUser.uid;
+      });
     }
   }
 }
