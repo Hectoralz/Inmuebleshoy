@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10g -->
+<html lang="es"><!-- build:2026-06-10h -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1021,9 +1021,9 @@ function openPropDetail(id) {
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
       // Clean agentId: strip invisible Unicode chars that can contaminate Firebase keys
       var cleanAgentId = p.agentId ? p.agentId.replace(/[^\x20-\x7E]/g, '').trim() : '';
-      if (cleanAgentId && window.db) {
-        // Always fetch from Firebase directly — cache may lag or have stale data
-        db.ref('agents/' + cleanAgentId).once('value', function(snap) {
+      if (cleanAgentId) {
+        // Always fetch from Firebase directly — use firebase.database() not window.db (can be null)
+        firebase.database().ref('agents/' + cleanAgentId).once('value', function(snap) {
           var agData = snap.val();
           if (agData) {
             if (agData.phone) agPhone = agData.phone;
