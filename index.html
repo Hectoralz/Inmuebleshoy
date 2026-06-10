@@ -1358,55 +1358,55 @@ function loadAllAdminData() {
   if (sel && sel.options.length <= 1) loadAgentSelect();
 }
 
+function clearPropsSearch() {
+  var inp = document.getElementById('adm-props-search');
+  if (inp) inp.value = '';
+  loadPropsList();
+}
 function loadPropsList() {
-  const el = document.getElementById('adm-props-list');
+  var el = document.getElementById('adm-props-list');
   if (!el) return;
   function renderAdminProps() {
-    const el2 = document.getElementById('adm-props-list');
+    var el2 = document.getElementById('adm-props-list');
     if (!el2) return;
     var allPropsRaw = allProps && allProps.length ? allProps : [];
-    var basProps = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
-    // Get current search query if bar already exists
-    var q = '';
+    var baseProps = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
     var existingInput = document.getElementById('adm-props-search');
-    if (existingInput) q = existingInput.value.toLowerCase().trim();
-    var props = q ? basProps.filter(function(p){
+    var q = existingInput ? existingInput.value.toLowerCase().trim() : '';
+    var props = q ? baseProps.filter(function(p){
       return (p.title||'').toLowerCase().includes(q) ||
              (p.city||'').toLowerCase().includes(q) ||
              (p.price||'').toLowerCase().includes(q) ||
              (p.type||'').toLowerCase().includes(q) ||
              (p.cat||'').toLowerCase().includes(q) ||
              (p.zone||'').toLowerCase().includes(q);
-    }) : basProps;
-    // Build search bar + table
-    var searchBar = '<div style="margin-bottom:14px;position:relative">' +
-      '<input id="adm-props-search" type="text" placeholder="🔍  Buscar por título, ciudad, tipo, precio…" ' +
-      'value="' + escHtml(q) + '" ' +
-      'oninput="loadPropsList()" ' +
-      'style="width:100%;padding:9px 36px 9px 14px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:.2s" ' +
-      'onfocus="this.style.borderColor='var(--gr)'" onblur="this.style.borderColor='var(--g200)'">' +
-      (q ? '<button onclick="document.getElementById('adm-props-search').value='';loadPropsList()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--g400);line-height:1">×</button>' : '') +
+    }) : baseProps;
+    var html = '<div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">' +
+      '<input id="adm-props-search" type="text" placeholder="Buscar por titulo, ciudad, tipo..." ' +
+      'value="' + escHtml(q) + '" oninput="loadPropsList()" ' +
+      'style="flex:1;padding:9px 12px;border:1.5px solid #e8eaed;border-radius:8px;font-family:inherit;font-size:13px;outline:none">' +
+      (q ? '<button onclick="clearPropsSearch()" style="padding:9px 12px;background:#e8eaed;border:none;border-radius:8px;cursor:pointer;font-size:13px">✕ Limpiar</button>' : '') +
     '</div>';
-    if (!basProps.length) {
-      el2.innerHTML = searchBar + '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
+    if (!baseProps.length) {
+      el2.innerHTML = html + '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
       return;
     }
-    var tableOrEmpty = props.length
-      ? '<div style="overflow-x:auto"><table class="tbl">' +
-        '<thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead>' +
-        '<tbody>' + props.map(function(p){ return '<tr>' +
-          '<td style="font-weight:600">' + escHtml(p.title) + '</td>' +
-          '<td><span class="bdg ' + (p.type==='venta'?'v':p.type==='renta'?'r':'d') + '">' + p.type + '</span></td>' +
+    if (!props.length) {
+      el2.innerHTML = html + '<p style="font-size:13px;color:var(--g400);padding:12px 0">Sin resultados para <strong>' + escHtml(q) + '</strong></p>';
+    } else {
+      var rows = props.map(function(p){
+        var badge = p.type==='venta'?'v':p.type==='renta'?'r':'d';
+        var actions = '<button class="bedi" onclick="editProp(\'' + escAttr(p.id) + '\')">Editar</button>';
+        if (currentRole === 'admin') actions += '<button class="bdel" onclick="deleteProp(\'' + escAttr(p.id) + '\',\'' + escAttr(p.title) + '\')">Eliminar</button>';
+        return '<tr><td style="font-weight:600">' + escHtml(p.title) + '</td>' +
+          '<td><span class="bdg ' + badge + '">' + p.type + '</span></td>' +
           '<td>' + escHtml(p.price) + '</td>' +
           '<td>' + escHtml(p.city||'—') + '</td>' +
           '<td>' + (p.photos||[]).length + '</td>' +
-          '<td><button class="bedi" onclick="editProp('' + escAttr(p.id) + '')">Editar</button>' +
-          (currentRole==='admin' ? '<button class="bdel" onclick="deleteProp('' + escAttr(p.id) + '','' + escAttr(p.title) + '')">Eliminar</button>' : '') +
-          '</td></tr>';
-        }).join('') + '</tbody></table></div>'
-      : '<p style="font-size:13px;color:var(--g400);padding:12px 0">Sin resultados para <strong>' + escHtml(q) + '</strong></p>';
-    el2.innerHTML = searchBar + tableOrEmpty;
-    // Keep focus on search if user was typing
+          '<td>' + actions + '</td></tr>';
+      }).join('');
+      el2.innerHTML = html + '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    }
     if (q) { var inp = document.getElementById('adm-props-search'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } }
   }
   if (allProps && allProps.length) {
@@ -1415,7 +1415,6 @@ function loadPropsList() {
     el.innerHTML = '<div class="spin"></div>';
   }
 }
-
 function loadAgentsList() {
   const el = document.getElementById('adm-agents-list');
   if (!el || !db) return;
