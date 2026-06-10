@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10a -->
+<html lang="es"><!-- build:2026-06-10b -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1854,65 +1854,39 @@ async function exportPropPDF(prop) {
   var agName = 'InmuebleHoy Realty';
   var agEmail = 'info@inmuebleshoy.com';
   var agPhone = '492 141 2672';
-  // PDF shows data of the property's assigned agent (not necessarily the logged-in user)
-  // Priority: 1) prop.agentId → Firebase agents record
-  //           2) currentUser if logged in → their agent record
-  //           3) admin defaults (Hector Alaniz)
-  //           4) agency defaults
-  if (window.db) {
+  // PDF always shows data of the currently logged-in user (currentUser), never the assigned agent.
+  if (window.db && currentUser) {
     try {
       var foundAgent = false;
-      // Step 1: use the property's assigned agentId
-      var cleanAgentId = prop.agentId ? prop.agentId.replace(/[^\x20-\x7E]/g, '').trim() : '';
-      if (cleanAgentId) {
-        var agSnap = await db.ref('agents/' + cleanAgentId).once('value');
-        var agData = agSnap.val();
-        if (agData) {
+      // Try by UID first (agents created via createUserWithEmailAndPassword)
+      var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
+      var agData = agSnap.val();
+      if (agData) {
+        foundAgent = true;
+        if (agData.name)  agName  = agData.name;
+        if (agData.email) agEmail = agData.email;
+        if (agData.phone) agPhone = agData.phone;
+      } else {
+        // Fallback: find agent record by email
+        var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
+        allAgSnap.forEach(function(c) {
+          var d = c.val();
           foundAgent = true;
-          if (agData.name) agName = agData.name;
-          if (agData.email) agEmail = agData.email;
-          if (agData.phone) agPhone = agData.phone;
-        }
+          if (d.name)  agName  = d.name;
+          if (d.email) agEmail = d.email;
+          if (d.phone) agPhone = d.phone;
+        });
       }
-      // Step 2: if no agent record found for the property, fall back to currentUser
-      if (!foundAgent && currentUser) {
-        var mySnap = await db.ref('agents/' + currentUser.uid).once('value');
-        var myData = mySnap.val();
-        if (myData) {
-          foundAgent = true;
-          if (myData.name) agName = myData.name;
-          if (myData.email) agEmail = myData.email;
-          if (myData.phone) agPhone = myData.phone;
-        } else {
-          // Try finding agent by email (edge case)
-          var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
-          allAgSnap.forEach(function(c) {
-            var d = c.val();
-            foundAgent = true;
-            if (d.name) agName = d.name;
-            if (d.email) agEmail = d.email;
-            if (d.phone) agPhone = d.phone;
-          });
+      // No agent record found → must be admin
+      if (!foundAgent) {
+        agEmail = currentUser.email;
+        if (isAdmin(currentUser.email)) {
+          agName  = 'Hector Alaniz';
+          agPhone = '492 141 2672';
         }
-      }
-      // Step 3: if still not found and user is admin, use admin defaults
-      if (!foundAgent && currentUser && isAdmin(currentUser.email)) {
-        agName = 'Hector Alaniz';
-        agPhone = '492 141 2672';
-        agEmail = currentUser.email;
-      } else if (!foundAgent && currentUser) {
-        agEmail = currentUser.email;
       }
     } catch(e) {
-      if (currentUser && currentUser.email) agEmail = currentUser.email;
-    }
-  } else if (currentUser) {
-    // No DB connection — show admin defaults if admin, else email only
-    if (isAdmin(currentUser.email)) {
-      agName = 'Hector Alaniz';
-      agEmail = currentUser.email;
-    } else {
-      agEmail = currentUser.email;
+      if (currentUser.email) agEmail = currentUser.email;
     }
   }
 
