@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-09c -->
+<html lang="es"><!-- build:2026-06-10a -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1019,28 +1019,29 @@ function openPropDetail(id) {
       var agName = 'InmuebleHoy Realty';
       var agPhone = '4921412672'; // agency default
       var propPhoto = p.photos && p.photos[0] ? p.photos[0] : '';
-      if (p.agentId && window.db) {
-        // Try allAgents cache first
-        var ag = (window.allAgents || []).find(function(a){ return a.id === p.agentId; });
-        if (ag) {
-          agPhone = ag.phone || agPhone;
-          agName = ag.name || agName;
+      // Clean agentId: strip invisible Unicode chars that can contaminate Firebase keys
+      var cleanAgentId = p.agentId ? p.agentId.replace(/[^\x20-\x7E]/g, '').trim() : '';
+      if (cleanAgentId && window.db) {
+        // Always fetch from Firebase directly — cache may lag or have stale data
+        db.ref('agents/' + cleanAgentId).once('value', function(snap) {
+          var agData = snap.val();
+          if (agData) {
+            if (agData.phone) agPhone = agData.phone;
+            if (agData.name) agName = agData.name;
+          } else {
+            // AgentId might be admin UID — try allAgents cache as last resort
+            var ag = (window.allAgents || []).find(function(a){
+              return a.id && a.id.replace(/[^\x20-\x7E]/g,'').trim() === cleanAgentId;
+            });
+            if (ag) {
+              if (ag.phone) agPhone = ag.phone;
+              if (ag.name) agName = ag.name;
+            }
+          }
           CM('mprop');
           openAgentContact(agName, agPhone, p.title, propPhoto);
-        } else {
-          // Fetch directly from Firebase
-          db.ref('agents/' + p.agentId).once('value', function(snap) {
-            var agData = snap.val();
-            if (agData && agData.phone) {
-              agPhone = agData.phone;
-              agName = agData.name || agName;
-            }
-            // If admin assigned (no agent record), keep agency phone
-            CM('mprop');
-            openAgentContact(agName, agPhone, p.title, propPhoto);
-          });
-          return; // wait for async
-        }
+        });
+        return; // wait for async
       } else {
         // No agent assigned — contact agency directly
         CM('mprop');
@@ -1853,39 +1854,65 @@ async function exportPropPDF(prop) {
   var agName = 'InmuebleHoy Realty';
   var agEmail = 'info@inmuebleshoy.com';
   var agPhone = '492 141 2672';
-  // PDF shows data of the person generating it (currentUser)
-  if (window.db && currentUser) {
+  // PDF shows data of the property's assigned agent (not necessarily the logged-in user)
+  // Priority: 1) prop.agentId → Firebase agents record
+  //           2) currentUser if logged in → their agent record
+  //           3) admin defaults (Hector Alaniz)
+  //           4) agency defaults
+  if (window.db) {
     try {
       var foundAgent = false;
-      // First try by UID (for agents created via createUserWithEmailAndPassword)
-      var agSnap = await db.ref('agents/' + currentUser.uid).once('value');
-      var agData = agSnap.val();
-      if (agData) {
-        foundAgent = true;
-        if (agData.name) agName = agData.name;
-        if (agData.email) agEmail = agData.email;
-        if (agData.phone) agPhone = agData.phone;
-      } else {
-        // Fallback: find agent by email (for agents created with admin-set UID)
-        var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
-        allAgSnap.forEach(function(c) {
-          var d = c.val();
+      // Step 1: use the property's assigned agentId
+      var cleanAgentId = prop.agentId ? prop.agentId.replace(/[^\x20-\x7E]/g, '').trim() : '';
+      if (cleanAgentId) {
+        var agSnap = await db.ref('agents/' + cleanAgentId).once('value');
+        var agData = agSnap.val();
+        if (agData) {
           foundAgent = true;
-          if (d.name) agName = d.name;
-          if (d.email) agEmail = d.email;
-          if (d.phone) agPhone = d.phone;
-        });
-      }
-      // If admin (no agent record), use their auth email + agency defaults
-      if (!foundAgent && currentUser.email) {
-        agEmail = currentUser.email;
-        if (isAdmin(currentUser.email)) {
-          agName = 'Hector Alaniz';
-          agPhone = '492 141 2672';
+          if (agData.name) agName = agData.name;
+          if (agData.email) agEmail = agData.email;
+          if (agData.phone) agPhone = agData.phone;
         }
       }
+      // Step 2: if no agent record found for the property, fall back to currentUser
+      if (!foundAgent && currentUser) {
+        var mySnap = await db.ref('agents/' + currentUser.uid).once('value');
+        var myData = mySnap.val();
+        if (myData) {
+          foundAgent = true;
+          if (myData.name) agName = myData.name;
+          if (myData.email) agEmail = myData.email;
+          if (myData.phone) agPhone = myData.phone;
+        } else {
+          // Try finding agent by email (edge case)
+          var allAgSnap = await db.ref('agents').orderByChild('email').equalTo(currentUser.email).once('value');
+          allAgSnap.forEach(function(c) {
+            var d = c.val();
+            foundAgent = true;
+            if (d.name) agName = d.name;
+            if (d.email) agEmail = d.email;
+            if (d.phone) agPhone = d.phone;
+          });
+        }
+      }
+      // Step 3: if still not found and user is admin, use admin defaults
+      if (!foundAgent && currentUser && isAdmin(currentUser.email)) {
+        agName = 'Hector Alaniz';
+        agPhone = '492 141 2672';
+        agEmail = currentUser.email;
+      } else if (!foundAgent && currentUser) {
+        agEmail = currentUser.email;
+      }
     } catch(e) {
-      if (currentUser.email) agEmail = currentUser.email;
+      if (currentUser && currentUser.email) agEmail = currentUser.email;
+    }
+  } else if (currentUser) {
+    // No DB connection — show admin defaults if admin, else email only
+    if (isAdmin(currentUser.email)) {
+      agName = 'Hector Alaniz';
+      agEmail = currentUser.email;
+    } else {
+      agEmail = currentUser.email;
     }
   }
 
