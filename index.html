@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-10e -->
+<html lang="es"><!-- build:2026-06-10f -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1872,8 +1872,8 @@ async function exportPropPDF(prop) {
       if (cachedAgent.email) agEmail = cachedAgent.email;
       if (cachedAgent.phone) agPhone = cachedAgent.phone;
     }
-    // 2. If not in cache, try Firebase directly
-    if (!foundAgent && window.db) {
+    // 2. Always try Firebase to get complete data (cache may be missing phone)
+    if (window.db) {
       try {
         var agSnap = await db.ref('agents/' + pdfUser.uid).once('value');
         var agData = agSnap.val();
@@ -1882,6 +1882,18 @@ async function exportPropPDF(prop) {
           if (agData.name)  agName  = agData.name;
           if (agData.email) agEmail = agData.email;
           if (agData.phone) agPhone = agData.phone;
+        } else {
+          // Try matching by email in case UID key differs
+          var allAgSnap = await db.ref('agents').once('value');
+          allAgSnap.forEach(function(c) {
+            var d = c.val();
+            if (d && d.email && d.email.toLowerCase().trim() === pdfUser.email.toLowerCase().trim()) {
+              foundAgent = true;
+              if (d.name)  agName  = d.name;
+              if (d.email) agEmail = d.email;
+              if (d.phone) agPhone = d.phone;
+            }
+          });
         }
       } catch(e) {
         console.warn('[PDF] Firebase read failed:', e.message);
