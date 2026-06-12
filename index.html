@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-12y -->
+<html lang="es"><!-- build:2026-06-12z -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -148,13 +148,14 @@ section{padding:52px 20px}
 .btitle2{font-size:14px;font-weight:700;line-height:1.4;margin-bottom:6px}
 .bexc2{font-size:12px;color:var(--g600);line-height:1.6}
 /* FOOTER */
-footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
-.fi{max-width:1280px;margin:0 auto}
+footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0;position:relative;overflow:hidden}
+footer::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 0%,rgba(46,204,113,.06),transparent 50%);pointer-events:none}
+.fi{max-width:1280px;margin:0 auto;position:relative;z-index:1}
 .ftt{display:grid;grid-template-columns:260px 1fr;gap:56px;margin-bottom:44px}
 .fbb>p{font-size:13px;line-height:1.7;margin-top:14px;color:rgba(255,255,255,.55)}
 .fsoc{display:flex;gap:8px;margin-top:18px}
-.fsb{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:#fff;transition:.2s;text-decoration:none}
-.fsb:hover{background:var(--gr)}
+.fsb{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:.2s;text-decoration:none;box-shadow:inset 1px 1px 2px rgba(255,255,255,.15),inset -1px -1px 3px rgba(0,0,0,.2);position:relative;z-index:1}
+.fsb:hover{background:rgba(46,204,113,.85)}
 .fsb svg{width:16px;height:16px}
 .flinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:36px}
 .fc h4{color:#fff;font-size:12px;font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.7px}
