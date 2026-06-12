@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-12l -->
+<html lang="es"><!-- build:2026-06-12m -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -279,14 +279,12 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 <!-- ═══ NAV ═══ -->
 <nav>
   <div class="ni">
-    <a href="#" class="logo" onclick="return false">
+    <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">
       <img src="logo.png" alt="InmueblesHoy" height="48" style="display:block">
     </a>
     <div class="nl">
-      <a href="#" onclick="return false" class="act">Inicio</a>
       <a href="#comprar" onclick="goTo('comprar');return false">Comprar</a>
       <a href="#rentar" onclick="goTo('rentar');return false">Rentar</a>
-      <a href="#nuevos" onclick="goTo('nuevos');return false">Desarrollos</a>
       <a href="#agentes" onclick="goTo('agentes');return false">Agentes</a>
     </div>
     <div class="nr">
@@ -346,7 +344,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 </section>
 
 <!-- AGENTES DESTACADOS -->
-<section style="background:var(--g50)">
+<section id="agentes" style="background:var(--g50)">
   <div class="si2">
     <div class="sh"><div><h2>Agentes <span>destacados</span></h2><p>Conoce a nuestro equipo de profesionales</p></div></div>
     <div class="agrid" id="agents-grid"><div class="spin"></div></div>
