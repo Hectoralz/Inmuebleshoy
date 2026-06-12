@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-12t -->
+<html lang="es"><!-- build:2026-06-12u -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -18,15 +18,15 @@
 :root{--dark:#2c3e50;--gr:#2ecc71;--grd:#27ae60;--gl:#eafaf1;--g50:#f8f9fa;--g100:#f1f3f4;--g200:#e8eaed;--g400:#9aa0a6;--g600:#5f6368;--txt:#2c3e50;--r:8px;--rl:12px;--sh:0 2px 12px rgba(0,0,0,.1);--shh:0 8px 32px rgba(0,0,0,.16)}
 body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt);background:#fff;line-height:1.5;overflow-x:hidden}
 /* NAV */
-nav{background:var(--dark);position:sticky;top:0;z-index:500;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+nav{background:rgba(44,62,80,.65);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);position:sticky;top:0;z-index:500;box-shadow:0 2px 8px rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.08)}
 .ni{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;height:64px;gap:16px}
 .logo{text-decoration:none;flex-shrink:0;display:flex;align-items:center}
 .nl{display:flex;align-items:center;gap:2px;flex:1}
 .nl a{color:rgba(255,255,255,.8);text-decoration:none;padding:7px 13px;border-radius:var(--r);font-size:14px;font-weight:500;transition:.2s;white-space:nowrap}
 .nl a:hover,.nl a.act{color:var(--gr)}
 .nr{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.bwh{color:#fff;border:1.5px solid rgba(255,255,255,.45);background:transparent;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap}
-.bwh:hover{border-color:#fff;background:rgba(255,255,255,.1)}
+.bwh{color:#fff;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap;box-shadow:inset 1px 1px 2px rgba(255,255,255,.25),inset -1px -1px 3px rgba(0,0,0,.15)}
+.bwh:hover{border-color:#fff;background:rgba(255,255,255,.16)}
 .bgr{background:var(--gr);color:#fff;border:none;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
 .bgr:hover{background:var(--grd)}
 /* HERO */
@@ -39,17 +39,18 @@ nav{background:var(--dark);position:sticky;top:0;z-index:500;box-shadow:0 2px 8p
 .tab{padding:8px 20px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;border:2px solid transparent;color:rgba(255,255,255,.65)}
 .tab:hover{color:#fff;background:rgba(255,255,255,.1)}
 .tab.on{background:var(--gr);color:#fff;border-color:var(--gr)}
-.sbox{background:#fff;border-radius:var(--rl);padding:4px 4px 4px 16px;display:flex;align-items:center;gap:8px;max-width:1100px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.3);position:relative}
+.sbox{background:rgba(255,255,255,.55);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);border:1px solid rgba(255,255,255,.4);border-radius:var(--rl);padding:4px 4px 4px 16px;display:flex;align-items:center;gap:8px;max-width:1100px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.3),inset 1px 1px 2px rgba(255,255,255,.6),inset -1px -1px 4px rgba(0,0,0,.06);position:relative}
 .sbox select{border:none;outline:none;font-family:inherit;font-size:14px;color:var(--g600);background:transparent;cursor:pointer;padding:8px 4px;flex-shrink:0}
 .sdiv{width:1px;height:24px;background:var(--g200);flex-shrink:0}
 .sbox input{flex:1;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--txt);min-width:0;padding:6px 0}
 .sbox input::placeholder{color:var(--g400)}
-.bsr{background:var(--gr);color:#fff;border:none;padding:12px 24px;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;flex-shrink:0}
-.bsr:hover{background:var(--grd)}
+.bsr{position:relative;overflow:hidden;isolation:isolate;background:rgba(46,204,113,.9);color:#fff;border:none;padding:12px 24px;border-radius:999px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;flex-shrink:0;box-shadow:inset 1px 1px 3px rgba(255,255,255,.5),inset -1px -1px 4px rgba(0,0,0,.2)}
+.bsr::before{content:'';position:absolute;inset:0;background:inherit;filter:url(#lgFilter);z-index:-1}
+.bsr:hover{background:rgba(39,174,96,.95)}
 .pop{margin-top:14px;position:relative}
 .pop span{color:rgba(255,255,255,.5);font-size:12px;margin-right:6px}
-.pop a{color:rgba(255,255,255,.82);font-size:12px;text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,.22);border-radius:50px;margin:2px;display:inline-block;transition:.2s}
-.pop a:hover{background:rgba(255,255,255,.1)}
+.pop a{color:rgba(255,255,255,.85);font-size:12px;text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:50px;margin:2px;display:inline-block;transition:.2s}
+.pop a:hover{background:rgba(255,255,255,.15)}
 /* STATS */
 .sbar{background:var(--gr);padding:16px 20px}
 .si{max-width:1280px;margin:0 auto;display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
@@ -273,6 +274,14 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 </style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute;pointer-events:none">
+  <filter id="lgFilter" x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.025" numOctaves="2" seed="7" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="2" result="blurNoise"/>
+    <feDisplacementMap in="SourceGraphic" in2="blurNoise" scale="14" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 
 <div id="toast" class="toast"></div>
 
