@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-13a -->
+<html lang="es"><!-- build:2026-06-13b -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1678,33 +1678,72 @@ function renderPhotoPreviews() {
   c.innerHTML = '';
   pendingPhotos.forEach(function(ph, i) {
     var d = document.createElement('div');
-    d.style.cssText = 'position:relative;display:inline-block;width:80px;height:80px;margin:4px;cursor:grab;vertical-align:top';
-    d.draggable = true;
+    d.style.cssText = 'position:relative;display:inline-block;width:80px;height:80px;margin:4px;cursor:grab;vertical-align:top;touch-action:none;user-select:none';
     d.dataset.idx = i;
-    var leftBtn = i > 0 ? '<button onclick="movePhoto('+i+',-1)" title="Mover a la izquierda" style="position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:20px;text-align:center;padding:0">‹</button>' : '';
-    var rightBtn = i < pendingPhotos.length-1 ? '<button onclick="movePhoto('+i+',1)" title="Mover a la derecha" style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:20px;text-align:center;padding:0">›</button>' : '';
-    d.innerHTML = '<img src="'+ph.url+'" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:2px solid var(--g200)">'
-      + '<button onclick="removePhoto('+i+')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:20px;text-align:center;padding:0">×</button>'
-      + '<div style="position:absolute;top:2px;left:2px;background:rgba(0,0,0,.5);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">'+(i+1)+'</div>'
-      + leftBtn + rightBtn;
-    // Drag events (desktop)
-    d.addEventListener('dragstart', function(e) {
-      e.dataTransfer.setData('text/plain', i);
-      d.style.opacity = '0.5';
-    });
-    d.addEventListener('dragend', function() { d.style.opacity = '1'; });
-    d.addEventListener('dragover', function(e) { e.preventDefault(); d.style.outline = '2px dashed var(--gr)'; });
-    d.addEventListener('dragleave', function() { d.style.outline = ''; });
-    d.addEventListener('drop', function(e) {
+    d.innerHTML = '<img src="'+ph.url+'" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:2px solid var(--g200);pointer-events:none">'
+      + '<button onclick="removePhoto('+i+')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:20px;text-align:center;padding:0;z-index:5">×</button>'
+      + '<div style="position:absolute;top:2px;left:2px;background:rgba(0,0,0,.5);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;pointer-events:none">'+(i+1)+'</div>';
+
+    d.addEventListener('pointerdown', function(e) {
+      if (e.target.tagName === 'BUTTON') return;
       e.preventDefault();
-      d.style.outline = '';
-      var from = parseInt(e.dataTransfer.getData('text/plain'));
-      var to = i;
-      if (from === to || isNaN(from)) return;
-      var moved = pendingPhotos.splice(from, 1)[0];
-      pendingPhotos.splice(to, 0, moved);
-      renderPhotoPreviews();
+      var startX = e.clientX, startY = e.clientY;
+      var dragging = false;
+      var ph2 = d.cloneNode(true);
+      ph2.style.position = 'fixed';
+      ph2.style.zIndex = '99999';
+      ph2.style.pointerEvents = 'none';
+      ph2.style.opacity = '0.85';
+      ph2.style.cursor = 'grabbing';
+      var rect = d.getBoundingClientRect();
+      ph2.style.left = rect.left + 'px';
+      ph2.style.top = rect.top + 'px';
+      ph2.style.width = rect.width + 'px';
+      ph2.style.height = rect.height + 'px';
+
+      function onMove(ev) {
+        var dx = ev.clientX - startX, dy = ev.clientY - startY;
+        if (!dragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+          dragging = true;
+          d.style.opacity = '0.3';
+          document.body.appendChild(ph2);
+        }
+        if (dragging) {
+          ph2.style.left = (rect.left + dx) + 'px';
+          ph2.style.top = (rect.top + dy) + 'px';
+          // find target under pointer
+          ph2.style.display = 'none';
+          var el = document.elementFromPoint(ev.clientX, ev.clientY);
+          ph2.style.display = '';
+          var target = el ? el.closest('[data-idx]') : null;
+          Array.from(c.children).forEach(function(ch){ ch.style.outline = ''; });
+          if (target && target !== d) target.style.outline = '2px dashed var(--gr)';
+        }
+      }
+      function onUp(ev) {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        if (dragging) {
+          ph2.style.display = 'none';
+          var el = document.elementFromPoint(ev.clientX, ev.clientY);
+          ph2.style.display = '';
+          var target = el ? el.closest('[data-idx]') : null;
+          Array.from(c.children).forEach(function(ch){ ch.style.outline = ''; });
+          if (ph2.parentNode) ph2.parentNode.removeChild(ph2);
+          d.style.opacity = '1';
+          if (target && target !== d) {
+            var from = i;
+            var to = parseInt(target.dataset.idx);
+            var moved = pendingPhotos.splice(from, 1)[0];
+            pendingPhotos.splice(to, 0, moved);
+            renderPhotoPreviews();
+          }
+        }
+      }
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
     });
+
     c.appendChild(d);
   });
 }
