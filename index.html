@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-12d -->
+<html lang="es"><!-- build:2026-06-12e -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -299,11 +299,6 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 <!-- ═══ HERO ═══ -->
 <section class="hero">
   <h1>¡Hola!</h1>
-  <div class="tabs">
-    <div class="tab on" onclick="setTab(this,'comprar')">Comprar</div>
-    <div class="tab" onclick="setTab(this,'rentar')">Rentar</div>
-    <div class="tab" onclick="setTab(this,'desarrollos')">Desarrollos nuevos</div>
-  </div>
   <div class="sbox">
     <select id="ssel">
       <option value="Casa">Casa</option>
@@ -332,22 +327,6 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 </section>
 
 
-<!-- TIPOS -->
-<section id="tipos">
-  <div class="si2">
-    <div class="sh"><div><h2>Busca por <span>tipo de inmueble</span></h2><p>Encuentra exactamente lo que necesitas</p></div></div>
-    <div class="tgrid">
-      <a href="#" class="tcard" onclick="filterType('Casa');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Casas</span><small>+180,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Departamento');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 3v18M16 3v18M2 9h20M2 15h20"/></svg><span>Departamentos</span><small>+140,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Terreno');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 20h18M3 20l4-8 4 4 3-6 4 10"/></svg><span>Terrenos</span><small>+60,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Oficina');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg><span>Oficinas</span><small>+30,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Local comercial');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M2 7l1-4h18l1 4M2 7v13a1 1 0 001 1h18a1 1 0 001-1V7M10 11v5M14 11v5"/></svg><span>Locales</span><small>+25,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Bodega');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Bodegas</span><small>+18,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Desarrollo');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="2" width="9" height="9"/><rect x="13" y="2" width="9" height="9"/><rect x="2" y="13" width="9" height="9"/><rect x="13" y="13" width="9" height="9"/></svg><span>Desarrollos</span><small>+8,000</small></a>
-      <a href="#" class="tcard" onclick="filterType('Quinta');return false"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg><span>Quintas</span><small>+12,000</small></a>
-    </div>
-  </div>
-</section>
 
 <!-- VENTA -->
 <section id="comprar" style="background:var(--g50)">
