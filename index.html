@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-13i -->
+<html lang="es"><!-- build:2026-06-13j -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -614,6 +614,32 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
     <label class="mlbl">Mensaje</label>
     <textarea class="minp" id="co-m" rows="3" style="resize:vertical" placeholder="¿En qué podemos ayudarte?"></textarea>
     <button class="mbg" onclick="sendCoForm()">Enviar</button>
+  </div>
+</div>
+
+<!-- EDITAR AGENTE -->
+<div id="meditagent" class="moverlay" onclick="overlayClick(event,'meditagent')">
+  <div class="mbox sm">
+    <button class="mclose" onclick="CM('meditagent')">×</button>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:12px">Editar agente</h2>
+    <div id="ea-msg"></div>
+    <input type="hidden" id="ea-id">
+    <label class="mlbl">Nombre completo</label>
+    <input class="minp" type="text" id="ea-name" placeholder="Ej: Carlos Mendoza">
+    <label class="mlbl">Correo electrónico</label>
+    <input class="minp" type="email" id="ea-email" placeholder="agente@correo.com" disabled style="background:var(--g50);color:var(--g400)">
+    <p style="font-size:11px;color:var(--g400);margin:-8px 0 11px">El correo de acceso no se puede cambiar aquí.</p>
+    <label class="mlbl">Zona / Ciudad</label>
+    <input class="minp" type="text" id="ea-zone" placeholder="Ej: Zacatecas Capital">
+    <label class="mlbl">WhatsApp / Teléfono</label>
+    <input class="minp" type="tel" id="ea-phone" placeholder="Ej: 4921234567">
+    <label class="mlbl">Foto del agente</label>
+    <div class="uarea" onclick="document.getElementById('ea-photo-inp').click()" style="padding:16px;margin-bottom:8px">
+      <p style="font-size:12px">Clic para cambiar foto</p>
+    </div>
+    <input type="file" id="ea-photo-inp" accept="image/*" style="display:none" onchange="handleEditAgentPhoto(this.files)">
+    <div id="ea-photo-prev"></div>
+    <button class="mbg" id="btn-saveeditagent" onclick="saveAgentEdit()" style="margin-top:10px">💾 Guardar cambios</button>
   </div>
 </div>
 
@@ -1406,7 +1432,7 @@ function loadAgentsList() {
         <td>${escHtml(a.email||'')}</td>
         <td>${escHtml(a.phone||'—')}</td>
         <td>${escHtml(a.zone||'—')}</td>
-        <td><button class="bdel" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name||'')}')">🗑 Eliminar</button></td>
+        <td><button class="bsv" style="padding:5px 10px;font-size:12px;margin-right:4px" onclick="openEditAgent('${escAttr(a.id)}')">✏️ Editar</button><button class="bdel" onclick="deleteAgent('${escAttr(a.id)}','${escAttr(a.name||'')}')">🗑 Eliminar</button></td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   });
@@ -1490,6 +1516,62 @@ async function deleteAgent(id, name) {
   await db.ref('agents/' + id).remove();
   showToast('Agente eliminado', 'ok');
   loadAgentsList();
+}
+
+let editAgentPhotoFile = null;
+function openEditAgent(id) {
+  if (!db) return;
+  db.ref('agents/' + id).once('value', snap => {
+    const a = snap.val();
+    if (!a) return;
+    document.getElementById('ea-id').value = id;
+    document.getElementById('ea-name').value = a.name || '';
+    document.getElementById('ea-email').value = a.email || '';
+    document.getElementById('ea-zone').value = a.zone || '';
+    document.getElementById('ea-phone').value = a.phone || '';
+    editAgentPhotoFile = null;
+    document.getElementById('ea-photo-prev').innerHTML = a.photo
+      ? `<img src="${escAttr(a.photo)}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;margin-top:8px">`
+      : '';
+    document.getElementById('ea-msg').innerHTML = '';
+    OM('meditagent');
+  });
+}
+function handleEditAgentPhoto(files) {
+  if (!files[0]) return;
+  editAgentPhotoFile = files[0];
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('ea-photo-prev').innerHTML =
+      `<img src="${ev.target.result}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;margin-top:8px">`;
+  };
+  reader.readAsDataURL(editAgentPhotoFile);
+}
+async function saveAgentEdit() {
+  const id = document.getElementById('ea-id').value;
+  const name = document.getElementById('ea-name').value.trim();
+  const zone = document.getElementById('ea-zone').value.trim();
+  const phone = (document.getElementById('ea-phone').value || '').replace(/[^0-9]/g, '');
+  const msgEl = document.getElementById('ea-msg');
+  if (!name) { msgEl.innerHTML = '<div class="merr">El nombre es obligatorio.</div>'; return; }
+  const btn = document.getElementById('btn-saveeditagent');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Guardando…';
+  try {
+    const updates = { name, zone, phone };
+    if (editAgentPhotoFile) {
+      updates.photo = await uploadToCloudinary(editAgentPhotoFile, 'agents');
+    }
+    await firebase.database().ref('agents/' + id).update(updates);
+    msgEl.innerHTML = '<div class="msuc">✅ Agente actualizado correctamente.</div>';
+    showToast('✅ Agente actualizado', 'ok');
+    loadAgentsList();
+    setTimeout(() => CM('meditagent'), 900);
+  } catch(e) {
+    msgEl.innerHTML = `<div class="merr">${escHtml(e.message)}</div>`;
+  }
+  btn.disabled = false;
+  btn.innerHTML = '💾 Guardar cambios';
 }
 
 // ── SAVE PROPERTY ──
