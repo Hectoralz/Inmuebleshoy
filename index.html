@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-13j -->
+<html lang="es"><!-- build:2026-06-13k -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -792,10 +792,18 @@ const POSTS = [
 ];
 
 // ── RENDER ──
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 function renderGrids() {
-  const v = allProps.filter(p => p.type === 'venta');
-  const r = allProps.filter(p => p.type === 'renta');
-  const d = allProps.filter(p => p.type === 'desarrollo');
+  const v = shuffleArr(allProps.filter(p => p.type === 'venta'));
+  const r = shuffleArr(allProps.filter(p => p.type === 'renta'));
+  const d = shuffleArr(allProps.filter(p => p.type === 'desarrollo'));
   setGrid('venta-grid', v.slice(0,8), 'No hay propiedades en venta aún.');
   setGrid('renta-grid', r.slice(0,8), 'No hay propiedades en renta aún.');
   setGrid('dev-grid', d.slice(0,8), 'No hay desarrollos publicados aún.');
