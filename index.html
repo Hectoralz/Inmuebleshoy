@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14m -->
+<html lang="es"><!-- build:2026-06-14n -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -869,6 +869,7 @@ function setGrid(id, arr, emptyMsg) {
 function propCard(p) {
   const bcls = p.type==='renta' ? 'pbadge r' : p.type==='desarrollo' ? 'pbadge d' : 'pbadge v';
   const btxt = p.type==='renta' ? 'En renta' : p.type==='desarrollo' ? 'Preventa' : 'En venta';
+  const isNew = p.createdAt && (Date.now() - p.createdAt) < 7 * 24 * 60 * 60 * 1000;
   const hasImg = p.photos && p.photos.length > 0;
   const imgInner = hasImg
     ? `<img src="${escHtml(p.photos[0])}" alt="${escHtml(p.title)}" loading="lazy">`
@@ -879,6 +880,7 @@ function propCard(p) {
     <div class="pimg">
       <div class="pimc"${bg}>${imgInner}</div>
       <span class="${bcls}">${btxt}</span>
+      ${isNew ? '<span class="pbadge" style="left:auto;right:8px;background:#FFB300;color:#23303A">✨ Nuevo</span>' : ''}
       <button class="pfav${isFav?' on':''}" id="fv-${escAttr(p.id)}" onclick="toggleFav(event,'${escAttr(p.id)}')" title="Guardar en favoritos">
         <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
@@ -1102,7 +1104,29 @@ function openPropDetail(id) {
     +   '<button class="mbo" style="font-size:12px" id="prop-fav-btn">❤ ' + (favs[p.id]?'Guardado':'Guardar') + '</button>'
     +   '<button class="mbo" style="font-size:12px;border-color:#e74c3c;color:#e74c3c" id="prop-pdf-btn">📄 PDF</button>'
     +   '<button class="mbo" style="font-size:12px;border-color:#1AAF5F;color:#1AAF5F" onclick="shareProp(\'' + escAttr(p.id) + '\',\'' + escAttr(p.title) + '\')">🔗 Compartir</button>'
-    + '</div>';
+    + '</div>'
+    + '<div id="similar-props-section"></div>';
+  // Render similar properties (same type, similar price range ±25%, excluding current)
+  (function(){
+    var price = parseFloat((p.price||'').toString().replace(/[$,\s]/g,'')) || 0;
+    var similar = allProps.filter(function(x){
+      if (x.id === p.id) return false;
+      if (x.type !== p.type) return false;
+      var xPrice = parseFloat((x.price||'').toString().replace(/[$,\s]/g,'')) || 0;
+      var sameCity = p.city && x.city && x.city === p.city;
+      var closePrice = price && xPrice && Math.abs(xPrice - price) <= price * 0.25;
+      return sameCity || closePrice;
+    }).slice(0, 4);
+    if (similar.length) {
+      var sec = document.getElementById('similar-props-section');
+      if (sec) {
+        sec.innerHTML = '<h3 style="font-size:15px;font-weight:700;margin:22px 0 12px">Propiedades similares</h3>'
+          + '<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">'
+          + similar.map(propCard).join('')
+          + '</div>';
+      }
+    }
+  })();
   OM('mprop');
   // Wire gallery clicks on photos
   if (p.photos && p.photos.length) {
