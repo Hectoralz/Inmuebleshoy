@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14j -->
+<html lang="es"><!-- build:2026-06-14k -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -279,6 +279,11 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 
 <div id="toast" class="toast"></div>
 
+<!-- WhatsApp flotante -->
+<a href="https://wa.me/5214921412672?text=Hola%2C%20me%20gustar%C3%ADa%20recibir%20informaci%C3%B3n%20sobre%20propiedades." target="_blank" id="wa-float" title="Contactar por WhatsApp" style="position:fixed;bottom:24px;right:24px;z-index:8000;width:56px;height:56px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.45);text-decoration:none;transition:.2s">
+  <svg viewBox="0 0 32 32" width="30" height="30" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.47.67 4.784 1.836 6.768L2 30l7.448-1.812A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.6a11.57 11.57 0 01-5.88-1.6l-.42-.25-4.42 1.075 1.1-4.3-.274-.44A11.56 11.56 0 014.4 16C4.4 9.59 9.59 4.4 16 4.4S27.6 9.59 27.6 16 22.41 27.6 16 27.6zm6.36-8.67c-.35-.175-2.07-1.02-2.39-1.137-.32-.115-.553-.175-.787.175-.233.35-.9 1.137-1.104 1.37-.203.234-.406.263-.756.088-.35-.175-1.478-.545-2.815-1.737-1.04-.927-1.742-2.072-1.946-2.422-.203-.35-.022-.54.153-.714.157-.157.35-.41.525-.614.175-.204.233-.35.35-.583.117-.234.058-.44-.03-.614-.087-.175-.787-1.896-1.078-2.597-.284-.682-.572-.59-.787-.6l-.67-.012c-.233 0-.612.088-.932.44-.32.35-1.223 1.195-1.223 2.916s1.252 3.382 1.427 3.615c.174.234 2.465 3.764 5.974 5.278.835.36 1.487.575 1.995.736.838.267 1.6.229 2.203.139.672-.1 2.07-.847 2.362-1.664.29-.817.29-1.517.203-1.664-.087-.146-.32-.234-.67-.41z"/></svg>
+</a>
+
 <!-- ═══ NAV ═══ -->
 <nav>
   <div class="ni">
@@ -393,6 +398,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
     <div class="adtabs" id="admin-tabs">
       <button class="atab on" onclick="showAT('at-props',this)">🏠 Mis Propiedades</button>
       <button class="atab adm-only" onclick="showAT('at-agents',this)">👥 Agentes</button>
+      <button class="atab adm-only" onclick="showAT('at-stats',this)">📊 Estadísticas</button>
       <button class="atab" onclick="showAT('at-addprop',this)">➕ Publicar propiedad</button>
       <button class="atab adm-only" onclick="showAT('at-addagent',this)">➕ Crear agente</button>
     </div>
@@ -405,6 +411,11 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
     <!-- LISTA AGENTES -->
     <div id="at-agents" class="asec">
       <div class="card"><h3>Agentes registrados</h3><div id="adm-agents-list"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div id="at-stats" class="asec">
+      <div class="card"><h3>📊 Propiedades más visitadas</h3><div id="adm-stats-list"><div class="spin"></div></div></div>
     </div>
 
     <!-- FORM PUBLICAR PROPIEDAD -->
@@ -561,7 +572,44 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
   <div class="mbox lg">
     <button class="mclose" onclick="CM('msearch')">×</button>
     <h2 id="ms-title" style="font-size:18px;font-weight:700;margin-bottom:4px">Resultados</h2>
-    <p id="ms-sub" style="font-size:13px;color:var(--g600);margin-bottom:18px"></p>
+    <p id="ms-sub" style="font-size:13px;color:var(--g600);margin-bottom:12px"></p>
+    <!-- Filtros avanzados -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px;padding:12px;background:var(--g50);border-radius:10px">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--g600);display:block;margin-bottom:3px">RECÁMARAS</label>
+        <select id="f-beds" onchange="applyFilters()" style="width:100%;padding:6px;border:1px solid var(--g200);border-radius:6px;font-size:12px">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4+</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--g600);display:block;margin-bottom:3px">BAÑOS</label>
+        <select id="f-baths" onchange="applyFilters()" style="width:100%;padding:6px;border:1px solid var(--g200);border-radius:6px;font-size:12px">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--g600);display:block;margin-bottom:3px">PRECIO MÍN</label>
+        <input id="f-pmin" type="number" placeholder="0" onchange="applyFilters()" style="width:100%;padding:6px;border:1px solid var(--g200);border-radius:6px;font-size:12px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--g600);display:block;margin-bottom:3px">PRECIO MÁX</label>
+        <input id="f-pmax" type="number" placeholder="Sin límite" onchange="applyFilters()" style="width:100%;padding:6px;border:1px solid var(--g200);border-radius:6px;font-size:12px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--g600);display:block;margin-bottom:3px">M² MÍN</label>
+        <input id="f-mmin" type="number" placeholder="0" onchange="applyFilters()" style="width:100%;padding:6px;border:1px solid var(--g200);border-radius:6px;font-size:12px;box-sizing:border-box">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button onclick="clearFilters()" style="width:100%;padding:6px;background:var(--g200);border:none;border-radius:6px;font-size:12px;cursor:pointer;color:var(--g600)">Limpiar filtros</button>
+      </div>
+    </div>
     <div class="pgrid" id="ms-results" style="gap:14px"></div>
   </div>
 </div>
@@ -994,6 +1042,7 @@ function OSM(mode, query) {
   if (mode === 'Comprar') results = results.filter(p => p.type === 'venta');
   else if (mode === 'Rentar') results = results.filter(p => p.type === 'renta');
   else if (mode === 'Desarrollos') results = results.filter(p => p.type === 'desarrollo');
+  _lastSearchResults = results;
   document.getElementById('ms-title').textContent = q ? `Resultados para "${q}"` : 'Todas las propiedades';
   document.getElementById('ms-sub').textContent = `${results.length} propiedades · ${m}`;
   document.getElementById('ms-results').innerHTML = results.length
@@ -1011,6 +1060,8 @@ function filterType(type) {
 function openPropDetail(id) {
   const p = allProps.find(x => x.id === id);
   if (!p) return;
+  // Track view count
+  try { firebase.database().ref('views/' + id).transaction(v => (v||0)+1); } catch(e){}
   // Build imgs HTML
   let imgs = '';
   if (p.photos && p.photos.length) {
@@ -1051,10 +1102,11 @@ function openPropDetail(id) {
     + '</div>'
     + mapHtml
     + descHtml
-    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:4px">'
     +   '<button class="mbg" style="margin-bottom:0;font-size:12px" id="prop-contact-btn">📞 Contactar</button>'
     +   '<button class="mbo" style="font-size:12px" id="prop-fav-btn">❤ ' + (favs[p.id]?'Guardado':'Guardar') + '</button>'
     +   '<button class="mbo" style="font-size:12px;border-color:#e74c3c;color:#e74c3c" id="prop-pdf-btn">📄 PDF</button>'
+    +   '<button class="mbo" style="font-size:12px;border-color:#1AAF5F;color:#1AAF5F" onclick="shareProp(\'' + escAttr(p.id) + '\',\'' + escAttr(p.title) + '\')">🔗 Compartir</button>'
     + '</div>';
   OM('mprop');
   // Wire gallery clicks on photos
@@ -1120,6 +1172,70 @@ function openPropDetail(id) {
 }
 
 // ── FAVORITES ──
+let _lastSearchResults = [];
+function applyFilters() {
+  const beds = parseInt(document.getElementById('f-beds').value) || 0;
+  const baths = parseInt(document.getElementById('f-baths').value) || 0;
+  const pmin = parseFloat(document.getElementById('f-pmin').value) || 0;
+  const pmax = parseFloat(document.getElementById('f-pmax').value) || Infinity;
+  const mmin = parseFloat(document.getElementById('f-mmin').value) || 0;
+  let filtered = _lastSearchResults.filter(p => {
+    const price = parseFloat((p.price||'').replace(/[$,\s]/g,'')) || 0;
+    const pb = parseInt(p.bedrooms||p.beds||0);
+    const pbath = parseInt(p.bathrooms||p.baths||0);
+    const pm2 = parseFloat(p.m2||p.area||0);
+    if (beds && pb < beds) return false;
+    if (baths && pbath < baths) return false;
+    if (pmin && price < pmin) return false;
+    if (pmax < Infinity && price > pmax) return false;
+    if (mmin && pm2 < mmin) return false;
+    return true;
+  });
+  document.getElementById('ms-sub').textContent = `${filtered.length} propiedades encontradas`;
+  document.getElementById('ms-results').innerHTML = filtered.length
+    ? filtered.map(propCard).join('')
+    : '<p style="color:var(--g400);font-size:13px;padding:20px 0">No hay propiedades con esos filtros.</p>';
+}
+function loadStats() {
+  const el = document.getElementById('adm-stats-list');
+  if (!el) return;
+  el.innerHTML = '<div class="spin"></div>';
+  firebase.database().ref('views').once('value', snap => {
+    const views = {};
+    snap.forEach(c => { views[c.key] = c.val(); });
+    // Sort props by views descending
+    const sorted = (allProps || [])
+      .map(p => ({ ...p, views: views[p.id] || 0 }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 20);
+    if (!sorted.length) { el.innerHTML = '<p style="color:var(--g400)">Sin datos aún.</p>'; return; }
+    el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
+      + '<tr style="background:var(--g50)"><th style="padding:8px;text-align:left">Propiedad</th><th style="padding:8px;text-align:left">Ciudad</th><th style="padding:8px;text-align:center">👁 Vistas</th></tr>'
+      + sorted.map((p,i) => `<tr style="border-top:1px solid var(--g200);${i===0?'background:#fff9e6':''}">
+          <td style="padding:8px;font-weight:${i<3?'700':'400'}">${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}${escHtml((p.title||'').substring(0,40))}${p.title&&p.title.length>40?'…':''}</td>
+          <td style="padding:8px;color:var(--g600)">${escHtml(p.city||'')}</td>
+          <td style="padding:8px;text-align:center;font-weight:700;color:var(--gr)">${p.views}</td>
+        </tr>`).join('')
+      + '</table>';
+  });
+}
+function clearFilters() {
+  ['f-beds','f-baths'].forEach(id => document.getElementById(id).value = '');
+  ['f-pmin','f-pmax','f-mmin'].forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+function shareProp(id, title) {
+  const url = window.location.origin + window.location.pathname + '?prop=' + id;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('✅ Link copiado al portapapeles', 'ok');
+    }).catch(() => {
+      showToast('Link: ' + url, '');
+    });
+  }
+}
 function toggleFav(evt, id) {
   if (evt) evt.stopPropagation();
   favs[id] = !favs[id];
@@ -1373,6 +1489,7 @@ function showAT(id, btn) {
   btn.classList.add('on');
   if (id === 'at-props') loadPropsList();
   if (id === 'at-agents') loadAgentsList();
+  if (id === 'at-stats') loadStats();
   if (id === 'at-addprop') {
     // If navigating to publish tab (not via editProp), reset edit mode
     if (!window._editingViaButton) {
@@ -1982,6 +2099,16 @@ function lbOpen(photos, startIdx) {
   lbRender();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow = 'hidden';
+  // Touch swipe support
+  const lb = document.getElementById('lightbox');
+  let _tx = 0;
+  lb._tsStart = function(e){ _tx = e.touches[0].clientX; };
+  lb._tsEnd = function(e){
+    const dx = e.changedTouches[0].clientX - _tx;
+    if (Math.abs(dx) > 50) lbNav(dx < 0 ? 1 : -1);
+  };
+  lb.addEventListener('touchstart', lb._tsStart, {passive:true});
+  lb.addEventListener('touchend', lb._tsEnd, {passive:true});
 }
 function lbClose() {
   document.getElementById('lightbox').classList.remove('open');
