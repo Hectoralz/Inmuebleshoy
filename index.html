@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14c -->
+<html lang="es"><!-- build:2026-06-14d -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -2039,6 +2039,23 @@ async function exportPropPDF(prop) {
         agName = pdfUser.email;
       }
     }
+  } else {
+    // No logged-in user — use the property's assigned agent
+    if (prop.agentId) {
+      try {
+        var _fdb2 = firebase.database();
+        var agSnap2 = await _fdb2.ref('agents/' + prop.agentId).once('value');
+        var agData2 = agSnap2.val();
+        if (agData2) {
+          if (agData2.name)  agName  = agData2.name;
+          if (agData2.email) agEmail = agData2.email;
+          if (agData2.phone) agPhone = agData2.phone;
+        }
+      } catch(e) {
+        console.warn('[PDF] Agent fetch failed for visitor:', e.message);
+      }
+    }
+    // If no agentId or fetch failed, defaults (agency) are already set above
   }
 
   // Keep photos in exact published order
