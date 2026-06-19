@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14k -->
+<html lang="es"><!-- build:2026-06-14l -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1200,24 +1200,28 @@ function loadStats() {
   const el = document.getElementById('adm-stats-list');
   if (!el) return;
   el.innerHTML = '<div class="spin"></div>';
-  firebase.database().ref('views').once('value', snap => {
-    const views = {};
-    snap.forEach(c => { views[c.key] = c.val(); });
-    // Sort props by views descending
+  const renderTable = function(views) {
     const sorted = (allProps || [])
-      .map(p => ({ ...p, views: views[p.id] || 0 }))
-      .sort((a, b) => b.views - a.views)
+      .map(p => ({ ...p, vw: views[p.id] || 0 }))
+      .sort((a, b) => b.vw - a.vw)
       .slice(0, 20);
-    if (!sorted.length) { el.innerHTML = '<p style="color:var(--g400)">Sin datos aún.</p>'; return; }
+    if (!sorted.length) { el.innerHTML = '<p style="color:var(--g400)">No hay propiedades publicadas aún.</p>'; return; }
     el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
       + '<tr style="background:var(--g50)"><th style="padding:8px;text-align:left">Propiedad</th><th style="padding:8px;text-align:left">Ciudad</th><th style="padding:8px;text-align:center">👁 Vistas</th></tr>'
-      + sorted.map((p,i) => `<tr style="border-top:1px solid var(--g200);${i===0?'background:#fff9e6':''}">
-          <td style="padding:8px;font-weight:${i<3?'700':'400'}">${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}${escHtml((p.title||'').substring(0,40))}${p.title&&p.title.length>40?'…':''}</td>
-          <td style="padding:8px;color:var(--g600)">${escHtml(p.city||'')}</td>
-          <td style="padding:8px;text-align:center;font-weight:700;color:var(--gr)">${p.views}</td>
-        </tr>`).join('')
+      + sorted.map((p,i) => '<tr style="border-top:1px solid var(--g200)">'
+          + '<td style="padding:8px;font-weight:'+(i<3?'700':'400')+'">'+(i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':'')+escHtml((p.title||'').substring(0,40))+((p.title||'').length>40?'…':'')+'</td>'
+          + '<td style="padding:8px;color:var(--g600)">'+escHtml(p.city||'')+'</td>'
+          + '<td style="padding:8px;text-align:center;font-weight:700;color:var(--gr)">'+p.vw+'</td>'
+          + '</tr>').join('')
       + '</table>';
-  });
+  };
+  try {
+    firebase.database().ref('views').once('value', function(snap) {
+      var views = {};
+      snap.forEach(function(c){ views[c.key] = c.val(); });
+      renderTable(views);
+    }, function(err){ renderTable({}); });
+  } catch(e){ renderTable({}); }
 }
 function clearFilters() {
   ['f-beds','f-baths'].forEach(id => document.getElementById(id).value = '');
@@ -1226,15 +1230,11 @@ function clearFilters() {
 }
 function shareProp(id, title) {
   const url = window.location.origin + window.location.pathname + '?prop=' + id;
-  if (navigator.share) {
-    navigator.share({ title: title, url: url }).catch(() => {});
-  } else {
-    navigator.clipboard.writeText(url).then(() => {
-      showToast('✅ Link copiado al portapapeles', 'ok');
-    }).catch(() => {
-      showToast('Link: ' + url, '');
-    });
-  }
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('✅ Link copiado — pégalo donde quieras compartirlo', 'ok');
+  }).catch(() => {
+    prompt('Copia este link:', url);
+  });
 }
 function toggleFav(evt, id) {
   if (evt) evt.stopPropagation();
