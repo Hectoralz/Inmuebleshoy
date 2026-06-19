@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14h -->
+<html lang="es"><!-- build:2026-06-14i -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -966,9 +966,9 @@ function OSM(mode, query) {
     const qNum = parseFloat(cleanQ);
     const isPriceSearch = !isNaN(qNum) && qNum > 1000 && /^[\d,.$\s]+$/.test(q.trim());
     if (isPriceSearch) {
-      // Match properties within ±20% of the searched price
-      const low = qNum * 0.8;
-      const high = qNum * 1.2;
+      // Match properties within ±300,000 of the searched price
+      const low = qNum - 300000;
+      const high = qNum + 300000;
       results = results.filter(p => {
         const pPrice = parseFloat((p.price||'').replace(/[$,\s]/g,''));
         return !isNaN(pPrice) && pPrice >= low && pPrice <= high;
