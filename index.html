@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14g -->
+<html lang="es"><!-- build:2026-06-14h -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -961,15 +961,35 @@ function OSM(mode, query) {
   const m = mode || document.querySelector('.tab.on')?.textContent.trim() || 'Comprar';
   let results = [...allProps];
   if (q) {
-    results = results.filter(p =>
-      (p.title||'').toLowerCase().includes(q) ||
-      (p.city||'').toLowerCase().includes(q) ||
-      (p.cat||'').toLowerCase().includes(q) ||
-      (p.desc||'').toLowerCase().includes(q) ||
-      (p.zone||'').toLowerCase().includes(q) ||
-      (p.price||'').toLowerCase().includes(q) ||
-      (p.address||'').toLowerCase().includes(q)
-    );
+    // Detect if query looks like a price (digits, commas, dots, $ sign)
+    const cleanQ = q.replace(/[$,\s]/g, '');
+    const qNum = parseFloat(cleanQ);
+    const isPriceSearch = !isNaN(qNum) && qNum > 1000 && /^[\d,.$\s]+$/.test(q.trim());
+    if (isPriceSearch) {
+      // Match properties within ±20% of the searched price
+      const low = qNum * 0.8;
+      const high = qNum * 1.2;
+      results = results.filter(p => {
+        const pPrice = parseFloat((p.price||'').replace(/[$,\s]/g,''));
+        return !isNaN(pPrice) && pPrice >= low && pPrice <= high;
+      });
+      // Sort by closest price
+      results.sort((a, b) => {
+        const aP = parseFloat((a.price||'').replace(/[$,\s]/g,''));
+        const bP = parseFloat((b.price||'').replace(/[$,\s]/g,''));
+        return Math.abs(aP - qNum) - Math.abs(bP - qNum);
+      });
+    } else {
+      results = results.filter(p =>
+        (p.title||'').toLowerCase().includes(q) ||
+        (p.city||'').toLowerCase().includes(q) ||
+        (p.cat||'').toLowerCase().includes(q) ||
+        (p.desc||'').toLowerCase().includes(q) ||
+        (p.zone||'').toLowerCase().includes(q) ||
+        (p.price||'').toLowerCase().includes(q) ||
+        (p.address||'').toLowerCase().includes(q)
+      );
+    }
   }
   if (mode === 'Comprar') results = results.filter(p => p.type === 'venta');
   else if (mode === 'Rentar') results = results.filter(p => p.type === 'renta');
