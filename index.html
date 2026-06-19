@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14p -->
+<html lang="es"><!-- build:2026-06-14q -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -392,6 +392,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
   <div class="adbody">
     <div class="adtabs" id="admin-tabs">
       <button class="atab on" onclick="showAT('at-props',this)">🏠 Mis Propiedades</button>
+      <button class="atab" onclick="showAT('at-archived',this)">📦 Archivadas</button>
       <button class="atab adm-only" onclick="showAT('at-agents',this)">👥 Agentes</button>
       <button class="atab adm-only" onclick="showAT('at-stats',this)">📊 Estadísticas</button>
       <button class="atab" onclick="showAT('at-addprop',this)">➕ Publicar propiedad</button>
@@ -400,7 +401,12 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 
     <!-- LISTA PROPIEDADES -->
     <div id="at-props" class="asec on">
-      <div class="card"><h3>Propiedades publicadas</h3><div id="adm-props-list"><div class="spin"></div></div></div>
+      <div class="card"><h3>Propiedades activas</h3><div id="adm-props-list"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- ARCHIVADAS -->
+    <div id="at-archived" class="asec">
+      <div class="card"><h3>📦 Propiedades archivadas (vendidas / rentadas)</h3><p style="font-size:12px;color:var(--g600);margin-bottom:12px">No visibles para el público. Puedes editarlas o relanzarlas al mercado.</p><div id="adm-archived-list"><div class="spin"></div></div></div>
     </div>
 
     <!-- LISTA AGENTES -->
@@ -853,10 +859,12 @@ function shuffleArr(arr) {
   }
   return a;
 }
+function isArchived(p) { return p.status === 'vendido' || p.status === 'rentado'; }
 function renderGrids() {
-  const v = shuffleArr(allProps.filter(p => p.type === 'venta'));
-  const r = shuffleArr(allProps.filter(p => p.type === 'renta'));
-  const d = shuffleArr(allProps.filter(p => p.type === 'desarrollo'));
+  const active = allProps.filter(p => !isArchived(p));
+  const v = shuffleArr(active.filter(p => p.type === 'venta'));
+  const r = shuffleArr(active.filter(p => p.type === 'renta'));
+  const d = shuffleArr(active.filter(p => p.type === 'desarrollo'));
   setGrid('venta-grid', v.slice(0,8), 'No hay propiedades en venta aún.');
   setGrid('renta-grid', r.slice(0,8), 'No hay propiedades en renta aún.');
   setGrid('dev-grid', d.slice(0,8), 'No hay desarrollos publicados aún.');
@@ -1004,7 +1012,7 @@ function showAgentProps(agentId, agentName) {
 function OSM(mode, query) {
   const q = (query || document.getElementById('sinput').value.trim() || '').toLowerCase();
   const m = mode || document.querySelector('.tab.on')?.textContent.trim() || 'Comprar';
-  let results = [...allProps];
+  let results = allProps.filter(p => !isArchived(p));
   if (q) {
     // Detect if query looks like a price (digits, commas, dots, $ sign)
     const cleanQ = q.replace(/[$,\s]/g, '');
@@ -1057,6 +1065,10 @@ function filterType(type) {
 function openPropDetail(id) {
   const p = allProps.find(x => x.id === id);
   if (!p) return;
+  if (isArchived(p) && !currentUser) {
+    showToast('Esta propiedad ya no está disponible.', '');
+    return;
+  }
   // Track view count
   try { firebase.database().ref('views/' + id).transaction(v => (v||0)+1); } catch(e){}
   // Build imgs HTML
@@ -1513,6 +1525,7 @@ function showAT(id, btn) {
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
   if (id === 'at-props') loadPropsList();
+  if (id === 'at-archived') loadArchivedList();
   if (id === 'at-agents') loadAgentsList();
   if (id === 'at-stats') loadStats();
   if (id === 'at-addprop') {
@@ -1561,6 +1574,31 @@ function clearPropsSearch() {
   if (inp) inp.value = '';
   loadPropsList();
 }
+var STATUS_LABELS = {
+  disponible: { label: '🟢 Disponible', color: '#1AAF5F' },
+  negociacion: { label: '🟡 En negociación', color: '#f39c12' },
+  apartada: { label: '🟠 Apartada', color: '#e67e22' }
+};
+function statusSelect(p) {
+  var opts = Object.keys(STATUS_LABELS).map(function(k){
+    return '<option value="' + k + '"' + ((p.status||'disponible')===k?' selected':'') + '>' + STATUS_LABELS[k].label + '</option>';
+  }).join('');
+  opts += '<option value="vendido"' + (p.status==='vendido'?' selected':'') + '>📦 Vendido (archivar)</option>';
+  opts += '<option value="rentado"' + (p.status==='rentado'?' selected':'') + '>📦 Rentado (archivar)</option>';
+  return '<select onchange="setPropStatus(\'' + escAttr(p.id) + '\', this.value)" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--g200)">' + opts + '</select>';
+}
+async function setPropStatus(id, status) {
+  await firebase.database().ref('properties/' + id).update({ status: status });
+  showToast(status === 'vendido' || status === 'rentado' ? '📦 Propiedad archivada' : '✅ Estado actualizado', 'ok');
+  loadPropsList();
+  loadArchivedList();
+}
+async function relaunchProp(id) {
+  await firebase.database().ref('properties/' + id).update({ status: 'disponible' });
+  showToast('🚀 Propiedad relanzada al mercado', 'ok');
+  loadPropsList();
+  loadArchivedList();
+}
 function loadPropsList() {
   var el = document.getElementById('adm-props-list');
   if (!el) return;
@@ -1569,6 +1607,7 @@ function loadPropsList() {
     if (!el2) return;
     var allPropsRaw = allProps && allProps.length ? allProps : [];
     var baseProps = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
+    baseProps = baseProps.filter(function(p){ return !isArchived(p); });
     var existingInput = document.getElementById('adm-props-search');
     var q = existingInput ? existingInput.value.toLowerCase().trim() : '';
     var props = q ? baseProps.filter(function(p){
@@ -1600,10 +1639,10 @@ function loadPropsList() {
           '<td><span class="bdg ' + badge + '">' + p.type + '</span></td>' +
           '<td>' + escHtml(p.price) + '</td>' +
           '<td>' + escHtml(p.city||'—') + '</td>' +
-          '<td>' + (p.photos||[]).length + '</td>' +
+          '<td>' + statusSelect(p) + '</td>' +
           '<td>' + actions + '</td></tr>';
       }).join('');
-      el2.innerHTML = html + '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Fotos</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      el2.innerHTML = html + '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Título</th><th>Tipo</th><th>Precio</th><th>Ciudad</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
     if (q) { var inp = document.getElementById('adm-props-search'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } }
   }
@@ -1612,6 +1651,29 @@ function loadPropsList() {
   } else {
     el.innerHTML = '<div class="spin"></div>';
   }
+}
+function loadArchivedList() {
+  var el = document.getElementById('adm-archived-list');
+  if (!el) return;
+  var allPropsRaw = allProps && allProps.length ? allProps : [];
+  var baseProps = currentRole === 'admin' ? allPropsRaw : allPropsRaw.filter(function(p){ return p.agentId === (currentUser && currentUser.uid); });
+  var archived = baseProps.filter(isArchived);
+  if (!archived.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--g400)">No hay propiedades archivadas.</p>';
+    return;
+  }
+  var rows = archived.map(function(p){
+    var statusLabel = p.status === 'vendido' ? '📦 Vendido' : '📦 Rentado';
+    var actions = '<button class="bedi" onclick="editProp(\'' + escAttr(p.id) + '\')">Editar</button>' +
+      '<button class="bsv" style="font-size:12px;padding:5px 10px" onclick="relaunchProp(\'' + escAttr(p.id) + '\')">🚀 Lanzar al mercado</button>';
+    if (currentRole === 'admin') actions += '<button class="bdel" onclick="deleteProp(\'' + escAttr(p.id) + '\',\'' + escAttr(p.title) + '\')">Eliminar</button>';
+    return '<tr><td style="font-weight:600">' + escHtml(p.title) + '</td>' +
+      '<td>' + statusLabel + '</td>' +
+      '<td>' + escHtml(p.price) + '</td>' +
+      '<td>' + escHtml(p.city||'—') + '</td>' +
+      '<td>' + actions + '</td></tr>';
+  }).join('');
+  el.innerHTML = '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Título</th><th>Estado</th><th>Precio</th><th>Ciudad</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 function loadAgentsList() {
   const el = document.getElementById('adm-agents-list');
