@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14f -->
+<html lang="es"><!-- build:2026-06-14g -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -618,6 +618,15 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
   </div>
 </div>
 
+<!-- PROPIEDADES DEL AGENTE -->
+<div id="magentprops" class="moverlay" onclick="overlayClick(event,'magentprops')">
+  <div class="mbox lg">
+    <button class="mclose" onclick="CM('magentprops')">×</button>
+    <h2 id="magentprops-title" style="font-size:18px;font-weight:700;margin-bottom:16px">Propiedades</h2>
+    <div id="magentprops-grid"></div>
+  </div>
+</div>
+
 <!-- EDITAR AGENTE -->
 <div id="meditagent" class="moverlay" onclick="overlayClick(event,'meditagent')">
   <div class="mbox sm">
@@ -851,15 +860,16 @@ function renderAgents(ags) {
       : (a.initials || '?');
     const avStyle = a.photo ? '' : ` style="background:${a.bg||'#eee'};color:${a.color||'#333'}"`;
     const propCount = a.id ? (allProps || []).filter(p => p.agentId === a.id).length : (a.props||0);
+    const showPropsBtn = a.id && propCount > 0 ? `<button class="bct" style="margin-top:6px;background:var(--dark);color:#fff;border-color:var(--dark)" onclick="showAgentProps('${escAttr(a.id)}','${escAttr(a.name)}')">Ver propiedades</button>` : '';
     return `<div class="acard">
       <div class="aav"${avStyle}>${avInner}</div>
       <div class="aname">${escHtml(a.name)}</div>
       <div class="azone">${escHtml(a.zone||'')}</div>
       <div class="astats">
         <div class="ast"><strong>${propCount}</strong>propiedades</div>
-        <div class="ast"><strong>${a.years||0}</strong>años exp.</div>
       </div>
-      <button class="bct" onclick="openAgentContact('${escAttr(a.name)}','${escAttr(a.phone||'')}','','')" >Contactar agente</button>
+      <button class="bct" onclick="openAgentContact('${escAttr(a.name)}','${escAttr(a.phone||'')}','','')">Contactar agente</button>
+      ${showPropsBtn}
     </div>`;
   }).join('');
 }
@@ -931,6 +941,21 @@ function qs(city) {
   OSM(null, city);
 }
 // OSM = Open Search Modal
+function showAgentProps(agentId, agentName) {
+  var props = (allProps || []).filter(function(p){ return p.agentId === agentId; });
+  var el = document.getElementById('magentprops-title');
+  if (el) el.textContent = 'Propiedades de ' + agentName;
+  var grid = document.getElementById('magentprops-grid');
+  if (grid) {
+    if (!props.length) {
+      grid.innerHTML = '<p style="text-align:center;color:var(--g600);padding:20px">Sin propiedades asignadas.</p>';
+    } else {
+      grid.innerHTML = '<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">' +
+        props.map(propCard).join('') + '</div>';
+    }
+  }
+  OM('magentprops');
+}
 function OSM(mode, query) {
   const q = (query || document.getElementById('sinput').value.trim() || '').toLowerCase();
   const m = mode || document.querySelector('.tab.on')?.textContent.trim() || 'Comprar';
