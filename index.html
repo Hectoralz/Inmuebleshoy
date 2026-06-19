@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14e -->
+<html lang="es"><!-- build:2026-06-14f -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1122,11 +1122,12 @@ function sendContact() {
   if (!name || !tel) { showToast('Por favor llena tu nombre y telefono', 'err'); return; }
   var msg = document.getElementById('c-msg').value.trim() || 'Hola, me interesa esta propiedad.';
   var nl = '\n';
-  var lines = 'Hola! Me interesa una propiedad.' + nl + nl;
+  var lines = '';
+  if (_agWaPhoto) lines += _agWaPhoto + nl + nl;
+  lines += 'Hola! Me interesa una propiedad.' + nl + nl;
   lines += '*Mi nombre:* ' + name + nl;
   lines += '*Teléfono:* ' + tel + nl;
   if (_agWaProp) lines += '*Propiedad:* ' + _agWaProp + nl;
-  if (_agWaPhoto) lines += '*Foto:* ' + _agWaPhoto + nl;
   if (msg && msg !== 'Hola, me interesa esta propiedad.') lines += '*Mensaje:* ' + msg;
   var phone = _agWaPhone || '5214921412672';
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
