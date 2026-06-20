@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-15a -->
+<html lang="es"><!-- build:2026-06-15b -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -204,24 +204,24 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 .upvi img{width:100%;height:100%;object-fit:cover}
 .upvi button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
 /* ADMIN */
-.admp{display:none;position:fixed;inset:0;background:#f0f2f5;z-index:8000;overflow-y:auto}
+.admp{display:none;position:fixed;inset:0;background:var(--g50);z-index:8000;overflow-y:auto}
 .admp.open{display:block}
 .adnav{background:var(--dark);padding:0 24px;display:flex;align-items:center;height:60px;gap:16px}
 .adnav h3{color:#fff;font-size:16px;font-weight:700}
 .adnav span{color:rgba(255,255,255,.5);font-size:13px}
 .adbody{max-width:1100px;margin:0 auto;padding:28px 20px}
-.adtabs{display:flex;gap:4px;margin-bottom:24px;background:#fff;border-radius:var(--rl);padding:4px;border:1px solid var(--g200);overflow-x:auto}
+.adtabs{display:flex;gap:4px;margin-bottom:24px;background:var(--card-bg);border-radius:var(--rl);padding:4px;border:1px solid var(--card-border);overflow-x:auto}
 .atab{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;color:var(--g600);border:none;background:transparent;font-family:inherit;white-space:nowrap}
 .atab.on{background:var(--gr);color:#fff}
 .asec{display:none}
 .asec.on{display:block}
-.card{background:#fff;border-radius:var(--rl);padding:20px;border:1px solid var(--g200);margin-bottom:16px}
+.card{background:var(--card-bg);border-radius:var(--rl);padding:20px;border:1px solid var(--card-border);margin-bottom:16px}
 .card h3{font-size:15px;font-weight:700;margin-bottom:16px}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .fg{margin-bottom:12px}
 .fg label{display:block;font-size:12px;font-weight:600;color:var(--g600);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
-.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:.2s}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:.2s;background:var(--card-bg);color:var(--txt)}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gr)}
 .fg textarea{resize:vertical;min-height:80px}
 .bsv{background:var(--gr);color:#fff;border:none;padding:10px 24px;border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
@@ -232,7 +232,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 .bedi{background:var(--dark);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl th{text-align:left;padding:10px 12px;background:var(--g50);color:var(--g600);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--g200)}
-.tbl td{padding:10px 12px;border-bottom:1px solid var(--g100);vertical-align:middle}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--g100);vertical-align:middle;color:var(--txt)}
 .tbl tr:hover td{background:var(--g50)}
 .bdg{display:inline-block;padding:2px 8px;border-radius:50px;font-size:11px;font-weight:600}
 .bdg.v{background:#eafaf1;color:#27ae60}
@@ -1859,7 +1859,7 @@ function statusSelect(p) {
   }).join('');
   opts += '<option value="vendido"' + (p.status==='vendido'?' selected':'') + '>📦 Vendido (archivar)</option>';
   opts += '<option value="rentado"' + (p.status==='rentado'?' selected':'') + '>📦 Rentado (archivar)</option>';
-  return '<select onchange="setPropStatus(\'' + escAttr(p.id) + '\', this.value)" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--g200)">' + opts + '</select>';
+  return '<select onchange="setPropStatus(\'' + escAttr(p.id) + '\', this.value)" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--g200);background:var(--card-bg);color:var(--txt)">' + opts + '</select>';
 }
 async function setPropStatus(id, status) {
   await firebase.database().ref('properties/' + id).update({ status: status });
@@ -1895,8 +1895,8 @@ function loadPropsList() {
     var html = '<div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">' +
       '<input id="adm-props-search" type="text" placeholder="Buscar por titulo, ciudad, tipo..." ' +
       'value="' + escHtml(q) + '" oninput="loadPropsList()" ' +
-      'style="flex:1;padding:9px 12px;border:1.5px solid #e8eaed;border-radius:8px;font-family:inherit;font-size:13px;outline:none">' +
-      (q ? '<button onclick="clearPropsSearch()" style="padding:9px 12px;background:#e8eaed;border:none;border-radius:8px;cursor:pointer;font-size:13px">✕ Limpiar</button>' : '') +
+      'style="flex:1;padding:9px 12px;border:1.5px solid var(--g200);border-radius:8px;font-family:inherit;font-size:13px;outline:none;background:var(--card-bg);color:var(--txt)">' +
+      (q ? '<button onclick="clearPropsSearch()" style="padding:9px 12px;background:var(--g200);border:none;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt)">✕ Limpiar</button>' : '') +
     '</div>';
     if (!baseProps.length) {
       el2.innerHTML = html + '<p style="font-size:13px;color:var(--g400)">No hay propiedades publicadas aún.</p>';
