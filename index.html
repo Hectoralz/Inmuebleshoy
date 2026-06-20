@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14q -->
+<html lang="es"><!-- build:2026-06-14r -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1111,29 +1111,43 @@ function openPropDetail(id) {
     + '</div>'
     + mapHtml
     + descHtml
-    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:4px">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">'
     +   '<button class="mbg" style="margin-bottom:0;font-size:12px" id="prop-contact-btn">📞 Contactar</button>'
     +   '<button class="mbo" style="font-size:12px" id="prop-fav-btn">❤ ' + (favs[p.id]?'Guardado':'Guardar') + '</button>'
     +   '<button class="mbo" style="font-size:12px;border-color:#e74c3c;color:#e74c3c" id="prop-pdf-btn">📄 PDF</button>'
-    +   '<button class="mbo" style="font-size:12px;border-color:#1AAF5F;color:#1AAF5F" onclick="shareProp(\'' + escAttr(p.id) + '\',\'' + escAttr(p.title) + '\')">🔗 Compartir</button>'
     + '</div>'
     + '<div id="similar-props-section"></div>';
-  // Render similar properties (same type, similar price range ±25%, excluding current)
+  // Render similar properties: same category, price tolerance varies by category, weighted by location + price
   (function(){
     var price = parseFloat((p.price||'').toString().replace(/[$,\s]/g,'')) || 0;
+    var cat = (p.cat||'').toLowerCase();
+    // Tolerance by category
+    var tolerance = 300000; // default (casas, etc.)
+    if (cat.indexOf('departamento') > -1 || cat.indexOf('depa') > -1) tolerance = 5000;
+    else if (cat.indexOf('local') > -1) tolerance = 10000;
+    else if (cat.indexOf('bodega') > -1) tolerance = Infinity; // price doesn't matter for bodegas
     var similar = allProps.filter(function(x){
       if (x.id === p.id) return false;
       if (x.type !== p.type) return false;
+      if ((x.cat||'').toLowerCase() !== cat) return false;
+      if (isArchived(x)) return false;
+      if (tolerance === Infinity) return true;
       var xPrice = parseFloat((x.price||'').toString().replace(/[$,\s]/g,'')) || 0;
       if (!price || !xPrice) return false;
-      return Math.abs(xPrice - price) <= 300000;
+      return Math.abs(xPrice - price) <= tolerance;
     }).sort(function(a, b){
       var aPrice = parseFloat((a.price||'').toString().replace(/[$,\s]/g,'')) || 0;
       var bPrice = parseFloat((b.price||'').toString().replace(/[$,\s]/g,'')) || 0;
       var aSameCity = (p.city && a.city === p.city) ? 0 : 1;
       var bSameCity = (p.city && b.city === p.city) ? 0 : 1;
-      if (aSameCity !== bSameCity) return aSameCity - bSameCity;
-      return Math.abs(aPrice - price) - Math.abs(bPrice - price);
+      var aSameZone = (p.zone && a.zone === p.zone) ? 0 : 1;
+      var bSameZone = (p.zone && b.zone === p.zone) ? 0 : 1;
+      // Combined score: location match weighs as much as price closeness
+      var aPriceDiff = price ? Math.abs(aPrice - price) / (tolerance === Infinity ? 1 : tolerance) : 0;
+      var bPriceDiff = price ? Math.abs(bPrice - price) / (tolerance === Infinity ? 1 : tolerance) : 0;
+      var aScore = (aSameCity * 2 + aSameZone) + aPriceDiff;
+      var bScore = (bSameCity * 2 + bSameZone) + bPriceDiff;
+      return aScore - bScore;
     }).slice(0, 4);
     if (similar.length) {
       var sec = document.getElementById('similar-props-section');
