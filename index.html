@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14x -->
+<html lang="es"><!-- build:2026-06-14y -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -964,7 +964,9 @@ function skeletonCards(n) {
   return html;
 }
 function setGrid(id, arr, emptyMsg) {
-  document.getElementById(id).innerHTML = arr.length
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = arr.length
     ? arr.map(p => propCard(p)).join('')
     : `<p style="color:var(--g400);font-size:13px;padding:20px 0">${emptyMsg}</p>`;
   animatePriceCounters();
