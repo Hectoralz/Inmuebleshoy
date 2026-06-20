@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14z -->
+<html lang="es"><!-- build:2026-06-15a -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -16,8 +16,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--dark:#2c3e50;--gr:#2ecc71;--grd:#27ae60;--gl:#eafaf1;--g50:#f8f9fa;--g100:#f1f3f4;--g200:#e8eaed;--g400:#9aa0a6;--g600:#5f6368;--txt:#2c3e50;--r:8px;--rl:12px;--sh:0 2px 12px rgba(0,0,0,.1);--shh:0 8px 32px rgba(0,0,0,.16)}
-body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt);background:#fff;line-height:1.5;overflow-x:hidden}
+:root{--dark:#2c3e50;--gr:#2ecc71;--grd:#27ae60;--gl:#eafaf1;--g50:#f8f9fa;--g100:#f1f3f4;--g200:#e8eaed;--g400:#9aa0a6;--g600:#5f6368;--txt:#2c3e50;--r:8px;--rl:12px;--sh:0 2px 12px rgba(0,0,0,.1);--shh:0 8px 32px rgba(0,0,0,.16);--bg:#fff;--card-bg:#fff;--card-border:var(--g200)}
+[data-theme="dark"]{--g50:#1c2128;--g100:#22272e;--g200:#2d333b;--g400:#768390;--g600:#adbac7;--txt:#cdd9e5;--bg:#0d1117;--card-bg:#161b22;--card-border:#2d333b;--sh:0 2px 12px rgba(0,0,0,.4);--shh:0 8px 32px rgba(0,0,0,.5)}
+body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt);background:var(--bg);line-height:1.5;overflow-x:hidden;transition:background .25s,color .25s}
 /* NAV */
 nav{background:var(--dark);position:sticky;top:0;z-index:500;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .ni{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;height:64px;gap:16px}
@@ -77,7 +78,7 @@ section{padding:52px 20px}
 .tcard small{display:block;font-size:11px;color:var(--g400);margin-top:2px}
 /* PROP CARDS */
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px}
-.pcard{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);overflow:hidden;transition:.22s;cursor:pointer}
+.pcard{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--rl);overflow:hidden;transition:.22s,background .25s,border-color .25s;cursor:pointer}
 .pcard:hover{box-shadow:var(--shh);transform:translateY(-3px)}
 .pimg{position:relative;height:190px;background:var(--g200);overflow:hidden}
 .pimc{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;font-size:11px;color:var(--g400);position:relative}
@@ -121,7 +122,7 @@ section{padding:52px 20px}
 .step p{font-size:13px;color:var(--g600);line-height:1.6}
 /* AGENTS */
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}
-.acard{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);padding:20px;text-align:center;transition:.22s;box-shadow:none}
+.acard{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--rl);padding:20px;text-align:center;transition:.22s,background .25s,border-color .25s;box-shadow:none}
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
 .acard:hover{box-shadow:var(--sh);transform:translateY(-2px)}
 .aav{width:66px;height:66px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;overflow:hidden}
@@ -176,7 +177,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 /* ═══ MODAL SYSTEM — sin bugs de nesting ═══ */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(20,28,36,.6);z-index:9000;align-items:center;justify-content:center;padding:16px}
 .moverlay.open{display:flex!important}
-.mbox{background:#fff;border:1px solid var(--g200);border-radius:16px;padding:32px;width:100%;position:relative;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mbox{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:32px;width:100%;position:relative;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);transition:background .25s,border-color .25s}
 .mbox.sm{max-width:420px}
 .mbox.md{max-width:580px}
 .mbox.lg{max-width:800px}
@@ -287,6 +288,12 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
   .r2,.r3{grid-template-columns:1fr}
 }
 </style>
+<script>
+  (function(){
+    var saved = localStorage.getItem('ih_theme');
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
 </head>
 <body>
 
@@ -318,6 +325,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
       <a href="#" onclick="openFavs();return false">❤ Favoritos</a>
     </div>
     <div class="nr">
+      <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.2s">🌙</button>
       <button class="bwh" id="nav-login-btn" onclick="OM('mlogin')">Iniciar sesión</button>
       <button class="bwh" id="nav-logout-btn" onclick="doLogout()" style="display:none;border-color:#e74c3c;color:#e74c3c">↩ Salir</button>
     </div>
@@ -817,6 +825,26 @@ function dismissIdleHelper() {
   document.addEventListener(evt, resetIdleTimer, { passive: true });
 });
 resetIdleTimer();
+
+// ── Theme toggle ──
+function applyThemeIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  btn.textContent = isDark ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('ih_theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('ih_theme', 'dark');
+  }
+  applyThemeIcon();
+}
+document.addEventListener('DOMContentLoaded', applyThemeIcon);
 
 function initApp() {
   try {
