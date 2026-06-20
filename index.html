@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14r -->
+<html lang="es"><!-- build:2026-06-14s -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -289,6 +289,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
       <a href="#comprar" onclick="goTo('comprar');return false">Comprar</a>
       <a href="#rentar" onclick="goTo('rentar');return false">Rentar</a>
       <a href="#agentes" onclick="goTo('agentes');return false">Agentes</a>
+      <a href="#" onclick="openFavs();return false">❤ Favoritos</a>
     </div>
     <div class="nr">
       <button class="bwh" id="nav-login-btn" onclick="OM('mlogin')">Iniciar sesión</button>
@@ -569,6 +570,16 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 </div>
 
 <!-- BUSCAR -->
+<!-- FAVORITOS -->
+<div id="mfavs" class="moverlay" onclick="overlayClick(event,'mfavs')">
+  <div class="mbox lg">
+    <button class="mclose" onclick="CM('mfavs')">×</button>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">❤ Mis favoritos</h2>
+    <p style="font-size:13px;color:var(--g600);margin-bottom:18px">Propiedades que has guardado</p>
+    <div class="pgrid" id="mfavs-results" style="gap:14px"></div>
+  </div>
+</div>
+
 <div id="msearch" class="moverlay" onclick="overlayClick(event,'msearch')">
   <div class="mbox lg">
     <button class="mclose" onclick="CM('msearch')">×</button>
@@ -730,7 +741,13 @@ const CLD = {
 // ── ESTADO ──
 let db = null, auth = null, currentUser = null, currentRole = null;
 let allProps = [], allAgents = [], pendingPhotos = [], agentPhotoFile = null, editingPropId = null;
-let favs = JSON.parse(localStorage.getItem('ih_favs') || '{}');
+function favsKey() {
+  return 'ih_favs_' + (currentUser && currentUser.uid ? currentUser.uid : 'guest');
+}
+let favs = JSON.parse(localStorage.getItem(favsKey()) || '{}');
+function reloadFavs() {
+  favs = JSON.parse(localStorage.getItem(favsKey()) || '{}');
+}
 
 // ── INIT ──
 function initApp() {
@@ -741,6 +758,8 @@ function initApp() {
     auth.onAuthStateChanged(user => {
       currentUser = user;
       updateNavForUser(user);
+      reloadFavs();
+      renderGrids();
       // loadAllAdminData only for admins; agents just get public data
       // (loadPublicData already called below for everyone)
     });
@@ -1287,10 +1306,20 @@ function shareProp(id, title) {
     prompt('Copia este link:', url);
   });
 }
+function openFavs() {
+  reloadFavs();
+  const ids = Object.keys(favs).filter(id => favs[id]);
+  const saved = allProps.filter(p => ids.includes(p.id));
+  const el = document.getElementById('mfavs-results');
+  el.innerHTML = saved.length
+    ? saved.map(propCard).join('')
+    : '<p style="color:var(--g400);font-size:13px;padding:20px 0">Aún no has guardado ninguna propiedad. Toca el ❤ en una propiedad para guardarla aquí.</p>';
+  OM('mfavs');
+}
 function toggleFav(evt, id) {
   if (evt) evt.stopPropagation();
   favs[id] = !favs[id];
-  localStorage.setItem('ih_favs', JSON.stringify(favs));
+  localStorage.setItem(favsKey(), JSON.stringify(favs));
   const btn = document.getElementById('fv-' + id);
   if (btn) btn.classList.toggle('on', !!favs[id]);
   showToast(favs[id] ? '❤ Guardado en favoritos' : 'Eliminado de favoritos', favs[id] ? 'ok' : '');
