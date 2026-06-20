@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14v -->
+<html lang="es"><!-- build:2026-06-14w -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -247,6 +247,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 .pdgrid p{font-size:14px;font-weight:600}
 /* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:var(--rl);font-size:13px;z-index:99999;transform:translateY(80px);opacity:0;transition:.3s;max-width:320px;pointer-events:none}
+@keyframes idlePopIn{0%{opacity:0;transform:translateY(16px) scale(.95)}100%{opacity:1;transform:translateY(0) scale(1)}}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.ok{background:#27ae60}
 .toast.err{background:#e74c3c}
@@ -290,6 +291,19 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 <body>
 
 <div id="toast" class="toast"></div>
+
+<!-- Burbuja de ayuda por inactividad -->
+<div id="idle-helper" style="display:none;position:fixed;bottom:24px;right:24px;z-index:7000;max-width:280px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:16px;animation:idlePopIn .35s ease">
+  <button onclick="dismissIdleHelper()" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:16px;color:var(--g400);cursor:pointer;padding:2px">×</button>
+  <div style="display:flex;gap:10px;align-items:flex-start">
+    <div style="font-size:24px;line-height:1">👀</div>
+    <div>
+      <p style="font-size:13px;font-weight:600;color:var(--txt);margin-bottom:4px">¿Todo bien?</p>
+      <p style="font-size:12px;color:var(--g600);margin-bottom:10px">¿Buscas algo en particular? Te ayudamos por WhatsApp.</p>
+      <a href="https://wa.me/5214921412672?text=Hola%2C%20estoy%20viendo%20su%20p%C3%A1gina%20y%20me%20gustar%C3%ADa%20que%20me%20ayuden%20a%20encontrar%20algo." target="_blank" onclick="dismissIdleHelper()" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px">💬 Hablar con alguien</a>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ NAV ═══ -->
 <nav>
@@ -778,6 +792,32 @@ function reloadFavs() {
 }
 
 // ── INIT ──
+// ── Idle helper bubble ──
+let _idleTimer = null;
+let _idleShown = sessionStorage.getItem('ih_idle_shown') === '1';
+function resetIdleTimer() {
+  if (_idleShown) return;
+  clearTimeout(_idleTimer);
+  _idleTimer = setTimeout(showIdleHelper, 30000);
+}
+function showIdleHelper() {
+  if (_idleShown) return;
+  // Don't show if a modal is currently open
+  if (document.querySelector('.moverlay.open')) { resetIdleTimer(); return; }
+  _idleShown = true;
+  sessionStorage.setItem('ih_idle_shown', '1');
+  const el = document.getElementById('idle-helper');
+  if (el) el.style.display = 'block';
+}
+function dismissIdleHelper() {
+  const el = document.getElementById('idle-helper');
+  if (el) el.style.display = 'none';
+}
+['mousemove', 'scroll', 'keydown', 'touchstart', 'click'].forEach(evt => {
+  document.addEventListener(evt, resetIdleTimer, { passive: true });
+});
+resetIdleTimer();
+
 function initApp() {
   try {
     if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
