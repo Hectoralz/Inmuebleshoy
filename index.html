@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14u -->
+<html lang="es"><!-- build:2026-06-14v -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -957,7 +957,17 @@ function animatePriceCounters() {
   }
   document.querySelectorAll('.pp-count').forEach(el => _priceObserver.observe(el));
 }
-function propCard(p) {
+function highlightText(text, query) {
+  if (!query || !text) return escHtml(text || '');
+  const esc = escHtml(text);
+  const q = query.trim();
+  if (!q) return esc;
+  try {
+    const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return esc.replace(re, '<mark style="background:#FFF3B0;color:inherit;border-radius:2px;padding:0 1px">$1</mark>');
+  } catch(e) { return esc; }
+}
+function propCard(p, searchQuery) {
   const bcls = p.type==='renta' ? 'pbadge r' : p.type==='desarrollo' ? 'pbadge d' : 'pbadge v';
   const btxt = p.type==='renta' ? 'En renta' : p.type==='desarrollo' ? 'Preventa' : 'En venta';
   const isNew = p.createdAt && (Date.now() - p.createdAt) < 7 * 24 * 60 * 60 * 1000;
@@ -978,8 +988,8 @@ function propCard(p) {
     </div>
     <div class="pbody">
       <div class="pp pp-count" data-target="${parseFloat((p.price||'0').toString().replace(/[$,\s]/g,''))||0}" data-currency="${escAttr(p.currency||'MXN')}">$0 <span>${escHtml(p.currency||'MXN')}</span></div>
-      <div class="pt" title="${escAttr(p.title)}">${escHtml(p.title)}</div>
-      <div class="ploc"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(p.city||'')}</div>
+      <div class="pt" title="${escAttr(p.title)}">${highlightText(p.title, searchQuery)}</div>
+      <div class="ploc"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${highlightText(p.city||'', searchQuery)}</div>
       <div class="pfs">
         <div class="pf"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 22V10l9-8 9 8v12"/><path d="M9 22v-7h6v7"/></svg><strong>${p.beds}</strong>&nbsp;rec.</div>
         <div class="pf"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M7 4v16M7 8H3a1 1 0 00-1 1v5a1 1 0 001 1h4"/><path d="M21 4v4a2 2 0 01-2 2H7"/><path d="M3 20h18"/></svg><strong>${p.baths}</strong>&nbsp;baños</div>
@@ -1097,11 +1107,12 @@ function OSM(mode, query) {
   const q = (query || document.getElementById('sinput').value.trim() || '').toLowerCase();
   const m = mode || document.querySelector('.tab.on')?.textContent.trim() || 'Comprar';
   let results = allProps.filter(p => !isArchived(p));
+  let isPriceSearch = false;
   if (q) {
     // Detect if query looks like a price (digits, commas, dots, $ sign)
     const cleanQ = q.replace(/[$,\s]/g, '');
     const qNum = parseFloat(cleanQ);
-    const isPriceSearch = !isNaN(qNum) && qNum > 1000 && /^[\d,.$\s]+$/.test(q.trim());
+    isPriceSearch = !isNaN(qNum) && qNum > 1000 && /^[\d,.$\s]+$/.test(q.trim());
     if (isPriceSearch) {
       // Match properties within ±300,000 of the searched price
       const low = qNum - 300000;
@@ -1135,7 +1146,7 @@ function OSM(mode, query) {
   document.getElementById('ms-title').textContent = q ? `Resultados para "${q}"` : 'Todas las propiedades';
   document.getElementById('ms-sub').textContent = `${results.length} propiedades · ${m}`;
   document.getElementById('ms-results').innerHTML = results.length
-    ? results.map(propCard).join('')
+    ? results.map(p => propCard(p, !isPriceSearch ? q : '')).join('')
     : '<p style="color:var(--g400);font-size:13px;padding:20px 0">No se encontraron propiedades.</p>';
   animatePriceCounters();
   // Reset to list view on fresh search
