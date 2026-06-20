@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14s -->
+<html lang="es"><!-- build:2026-06-14t -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -81,7 +81,9 @@ section{padding:52px 20px}
 .pcard:hover{box-shadow:var(--shh);transform:translateY(-3px)}
 .pimg{position:relative;height:190px;background:var(--g200);overflow:hidden}
 .pimc{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;font-size:11px;color:var(--g400);position:relative}
-.pimc img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:block}
+.pimc img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:block;transition:transform .35s ease}
+.pcard:hover .pimc img{transform:scale(1.06)}
+.pimg{overflow:hidden}
 .pimc svg{width:36px;height:36px;opacity:.3;stroke:#888;fill:none}
 .pbadge{position:absolute;top:10px;left:10px;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:50px;z-index:1}
 .pbadge.v{background:var(--gr)}.pbadge.r{background:var(--dark)}.pbadge.d{background:#e67e22}
@@ -89,6 +91,8 @@ section{padding:52px 20px}
 .pfav:hover,.pfav.on{background:var(--gr)}
 .pfav.on svg,.pfav:hover svg{stroke:#fff;fill:#fff}
 .pfav svg{width:16px;height:16px;stroke:var(--g600);fill:none;transition:.2s}
+@keyframes favPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.pfav.pop{animation:favPop .35s ease}
 .pbody{padding:14px}
 .pp{font-size:18px;font-weight:700;color:var(--dark);margin-bottom:4px}
 .pp span{font-size:12px;color:var(--g600);font-weight:400}
@@ -246,6 +250,12 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 .toast.err{background:#e74c3c}
 /* SPINNER */
 .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--g200);border-top-color:var(--gr);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes skeletonPulse{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);overflow:hidden}
+.skel-img{width:100%;aspect-ratio:4/3;background:linear-gradient(90deg,#eceef1 25%,#f7f8fa 37%,#eceef1 63%);background-size:400% 100%;animation:skeletonPulse 1.4s ease infinite}
+.skel-line{height:12px;border-radius:4px;background:linear-gradient(90deg,#eceef1 25%,#f7f8fa 37%,#eceef1 63%);background-size:400% 100%;animation:skeletonPulse 1.4s ease infinite;margin:8px 14px}
+.skel-line.sm{width:60%}
+.skel-line.lg{width:85%}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* ── PHOTO GALLERY LIGHTBOX ── */
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:99999;align-items:center;justify-content:center;flex-direction:column}
@@ -334,7 +344,12 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 <section id="comprar" style="background:var(--g50)">
   <div class="si2">
     <div class="sh"><div><h2>Propiedades en <span>VENTA</span></h2><p>Las mejores opciones disponibles hoy</p></div><a href="#" class="sa" onclick="OSM('Comprar');return false">Ver todas ›</a></div>
-    <div class="pgrid" id="venta-grid"><div class="spin"></div></div>
+    <div class="pgrid" id="venta-grid">
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+    </div>
   </div>
 </section>
 
@@ -342,7 +357,12 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 <section id="rentar">
   <div class="si2">
     <div class="sh"><div><h2>Propiedades en <span>RENTA</span></h2><p>Encuentra el hogar perfecto para arrendar</p></div><a href="#" class="sa" onclick="OSM('Rentar');return false">Ver todas ›</a></div>
-    <div class="pgrid" id="renta-grid"><div class="spin"></div></div>
+    <div class="pgrid" id="renta-grid">
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+      <div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>
+    </div>
   </div>
 </section>
 
@@ -585,6 +605,11 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
     <button class="mclose" onclick="CM('msearch')">×</button>
     <h2 id="ms-title" style="font-size:18px;font-weight:700;margin-bottom:4px">Resultados</h2>
     <p id="ms-sub" style="font-size:13px;color:var(--g600);margin-bottom:12px"></p>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button id="ms-view-toggle" onclick="toggleMapView()" style="font-size:12px;padding:6px 14px;border:1px solid var(--g200);border-radius:50px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:6px">
+        🗺️ Ver en mapa
+      </button>
+    </div>
     <!-- Filtros avanzados -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px;padding:12px;background:var(--g50);border-radius:10px">
       <div>
@@ -623,6 +648,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
       </div>
     </div>
     <div class="pgrid" id="ms-results" style="gap:14px"></div>
+    <div id="ms-map" style="display:none"></div>
   </div>
 </div>
 
@@ -888,10 +914,46 @@ function renderGrids() {
   setGrid('renta-grid', r.slice(0,8), 'No hay propiedades en renta aún.');
   setGrid('dev-grid', d.slice(0,8), 'No hay desarrollos publicados aún.');
 }
+function skeletonCards(n) {
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    html += '<div class="skel-card"><div class="skel-img"></div><div class="skel-line lg" style="margin-top:14px"></div><div class="skel-line sm"></div><div class="skel-line" style="margin-bottom:14px"></div></div>';
+  }
+  return html;
+}
 function setGrid(id, arr, emptyMsg) {
   document.getElementById(id).innerHTML = arr.length
     ? arr.map(propCard).join('')
     : `<p style="color:var(--g400);font-size:13px;padding:20px 0">${emptyMsg}</p>`;
+  animatePriceCounters();
+}
+let _priceObserver = null;
+function animatePriceCounters() {
+  if (!_priceObserver) {
+    _priceObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          _priceObserver.unobserve(el);
+          const target = parseFloat(el.dataset.target) || 0;
+          const currency = el.dataset.currency || 'MXN';
+          const span = el.querySelector('span');
+          const dur = 600;
+          const start = performance.now();
+          function frame(now) {
+            const p = Math.min((now - start) / dur, 1);
+            const eased = 1 - Math.pow(1 - p, 3);
+            const val = Math.floor(target * eased);
+            el.firstChild.textContent = '$' + val.toLocaleString('es-MX') + ' ';
+            if (p < 1) requestAnimationFrame(frame);
+            else el.firstChild.textContent = '$' + target.toLocaleString('es-MX') + ' ';
+          }
+          requestAnimationFrame(frame);
+        }
+      });
+    }, { threshold: 0.2 });
+  }
+  document.querySelectorAll('.pp-count').forEach(el => _priceObserver.observe(el));
 }
 function propCard(p) {
   const bcls = p.type==='renta' ? 'pbadge r' : p.type==='desarrollo' ? 'pbadge d' : 'pbadge v';
@@ -913,7 +975,7 @@ function propCard(p) {
       </button>
     </div>
     <div class="pbody">
-      <div class="pp">${escHtml(fmtPrice(p.price))} <span>${escHtml(p.currency||'MXN')}</span></div>
+      <div class="pp pp-count" data-target="${parseFloat((p.price||'0').toString().replace(/[$,\s]/g,''))||0}" data-currency="${escAttr(p.currency||'MXN')}">$0 <span>${escHtml(p.currency||'MXN')}</span></div>
       <div class="pt" title="${escAttr(p.title)}">${escHtml(p.title)}</div>
       <div class="ploc"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(p.city||'')}</div>
       <div class="pfs">
@@ -1024,6 +1086,7 @@ function showAgentProps(agentId, agentName) {
     } else {
       grid.innerHTML = '<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">' +
         props.map(propCard).join('') + '</div>';
+      animatePriceCounters();
     }
   }
   OM('magentprops');
@@ -1072,6 +1135,12 @@ function OSM(mode, query) {
   document.getElementById('ms-results').innerHTML = results.length
     ? results.map(propCard).join('')
     : '<p style="color:var(--g400);font-size:13px;padding:20px 0">No se encontraron propiedades.</p>';
+  animatePriceCounters();
+  // Reset to list view on fresh search
+  _mapViewOn = false;
+  document.getElementById('ms-view-toggle').innerHTML = '🗺️ Ver en mapa';
+  document.getElementById('ms-results').style.display = '';
+  document.getElementById('ms-map').style.display = 'none';
   OM('msearch');
 }
 function filterType(type) {
@@ -1175,6 +1244,7 @@ function openPropDetail(id) {
           + '<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">'
           + similar.map(propCard).join('')
           + '</div>';
+        animatePriceCounters();
       }
     }
   })();
@@ -1242,6 +1312,53 @@ function openPropDetail(id) {
 }
 
 // ── FAVORITES ──
+let _mapViewOn = false;
+function toggleMapView() {
+  _mapViewOn = !_mapViewOn;
+  const btn = document.getElementById('ms-view-toggle');
+  const resultsEl = document.getElementById('ms-results');
+  const mapEl = document.getElementById('ms-map');
+  if (_mapViewOn) {
+    btn.innerHTML = '📋 Ver en lista';
+    resultsEl.style.display = 'none';
+    mapEl.style.display = 'block';
+    renderMapView(_lastSearchResults);
+  } else {
+    btn.innerHTML = '🗺️ Ver en mapa';
+    resultsEl.style.display = '';
+    mapEl.style.display = 'none';
+  }
+}
+function renderMapView(props) {
+  const mapEl = document.getElementById('ms-map');
+  if (!props.length) {
+    mapEl.innerHTML = '<p style="color:var(--g400);font-size:13px;padding:20px 0">No hay propiedades para mostrar en el mapa.</p>';
+    return;
+  }
+  // Group by zone/city for a cleaner overview
+  const groups = {};
+  props.forEach(p => {
+    const key = (p.zone || p.city || 'Otra zona').trim();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  });
+  const zones = Object.keys(groups).sort((a,b) => groups[b].length - groups[a].length);
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  zones.forEach(zone => {
+    const list = groups[zone];
+    const q = encodeURIComponent(zone + ' Zacatecas Mexico');
+    html += '<div style="border:1px solid var(--g200);border-radius:12px;overflow:hidden">'
+      + '<iframe src="https://maps.google.com/maps?q=' + q + '&output=embed&z=14" width="100%" height="180" style="border:0;display:block" loading="lazy"></iframe>'
+      + '<div style="padding:10px 14px">'
+      + '<strong style="font-size:13px">' + escHtml(zone) + '</strong> <span style="color:var(--g600);font-size:12px">(' + list.length + ' ' + (list.length===1?'propiedad':'propiedades') + ')</span>'
+      + '<div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">'
+      + list.slice(0,4).map(p => '<a href="#" onclick="toggleMapView();openPropDetail(\'' + escAttr(p.id) + '\');return false" style="font-size:12px;color:var(--gr);text-decoration:none">→ ' + escHtml((p.title||'').substring(0,45)) + ' · ' + escHtml(fmtPrice(p.price)) + '</a>').join('')
+      + (list.length > 4 ? '<span style="font-size:11px;color:var(--g400)">+' + (list.length-4) + ' más en esta zona</span>' : '')
+      + '</div></div></div>';
+  });
+  html += '</div>';
+  mapEl.innerHTML = html;
+}
 let _lastSearchResults = [];
 function applyFilters() {
   const beds = parseInt(document.getElementById('f-beds').value) || 0;
@@ -1265,6 +1382,8 @@ function applyFilters() {
   document.getElementById('ms-results').innerHTML = filtered.length
     ? filtered.map(propCard).join('')
     : '<p style="color:var(--g400);font-size:13px;padding:20px 0">No hay propiedades con esos filtros.</p>';
+  animatePriceCounters();
+  if (_mapViewOn) renderMapView(filtered);
 }
 function loadStats() {
   const el = document.getElementById('adm-stats-list');
@@ -1314,6 +1433,7 @@ function openFavs() {
   el.innerHTML = saved.length
     ? saved.map(propCard).join('')
     : '<p style="color:var(--g400);font-size:13px;padding:20px 0">Aún no has guardado ninguna propiedad. Toca el ❤ en una propiedad para guardarla aquí.</p>';
+  animatePriceCounters();
   OM('mfavs');
 }
 function toggleFav(evt, id) {
@@ -1321,7 +1441,12 @@ function toggleFav(evt, id) {
   favs[id] = !favs[id];
   localStorage.setItem(favsKey(), JSON.stringify(favs));
   const btn = document.getElementById('fv-' + id);
-  if (btn) btn.classList.toggle('on', !!favs[id]);
+  if (btn) {
+    btn.classList.toggle('on', !!favs[id]);
+    btn.classList.remove('pop');
+    void btn.offsetWidth; // restart animation
+    btn.classList.add('pop');
+  }
   showToast(favs[id] ? '❤ Guardado en favoritos' : 'Eliminado de favoritos', favs[id] ? 'ok' : '');
 }
 
@@ -2252,7 +2377,12 @@ function lbRender() {
   const counter = document.getElementById('lb-counter');
   const thumbs = document.getElementById('lb-thumbs');
   if (!img || !lbPhotos.length) return;
-  img.src = lbPhotos[lbIdx];
+  img.style.transition = 'opacity .2s ease';
+  img.style.opacity = '0';
+  setTimeout(() => {
+    img.src = lbPhotos[lbIdx];
+    img.onload = () => { img.style.opacity = '1'; };
+  }, 180);
   counter.textContent = (lbIdx + 1) + ' / ' + lbPhotos.length;
   thumbs.innerHTML = lbPhotos.map((u,i) =>
     '<img class="lb-thumb' + (i===lbIdx?' active':'') + '" src="' + u + '" onclick="lbGoTo(' + i + ')">'
