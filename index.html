@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14w -->
+<html lang="es"><!-- build:2026-06-14x -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -965,7 +965,7 @@ function skeletonCards(n) {
 }
 function setGrid(id, arr, emptyMsg) {
   document.getElementById(id).innerHTML = arr.length
-    ? arr.map(propCard).join('')
+    ? arr.map(p => propCard(p)).join('')
     : `<p style="color:var(--g400);font-size:13px;padding:20px 0">${emptyMsg}</p>`;
   animatePriceCounters();
 }
@@ -998,7 +998,7 @@ function animatePriceCounters() {
   document.querySelectorAll('.pp-count').forEach(el => _priceObserver.observe(el));
 }
 function highlightText(text, query) {
-  if (!query || !text) return escHtml(text || '');
+  if (!query || typeof query !== 'string' || !text) return escHtml(text || '');
   const esc = escHtml(text);
   const q = query.trim();
   if (!q) return esc;
@@ -1137,7 +1137,7 @@ function showAgentProps(agentId, agentName) {
       grid.innerHTML = '<p style="text-align:center;color:var(--g600);padding:20px">Sin propiedades asignadas.</p>';
     } else {
       grid.innerHTML = '<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">' +
-        props.map(propCard).join('') + '</div>';
+        props.map(p => propCard(p)).join('') + '</div>';
       animatePriceCounters();
     }
   }
@@ -1295,7 +1295,7 @@ function openPropDetail(id) {
       if (sec) {
         sec.innerHTML = '<h3 style="font-size:15px;font-weight:700;margin:22px 0 12px">Propiedades similares</h3>'
           + '<div class="pgrid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">'
-          + similar.map(propCard).join('')
+          + similar.map(p => propCard(p)).join('')
           + '</div>';
         animatePriceCounters();
       }
@@ -1433,7 +1433,7 @@ function applyFilters() {
   });
   document.getElementById('ms-sub').textContent = `${filtered.length} propiedades encontradas`;
   document.getElementById('ms-results').innerHTML = filtered.length
-    ? filtered.map(propCard).join('')
+    ? filtered.map(p => propCard(p)).join('')
     : '<p style="color:var(--g400);font-size:13px;padding:20px 0">No hay propiedades con esos filtros.</p>';
   animatePriceCounters();
   if (_mapViewOn) renderMapView(filtered);
@@ -1484,7 +1484,7 @@ function openFavs() {
   const saved = allProps.filter(p => ids.includes(p.id));
   const el = document.getElementById('mfavs-results');
   el.innerHTML = saved.length
-    ? saved.map(propCard).join('')
+    ? saved.map(p => propCard(p)).join('')
     : '<p style="color:var(--g400);font-size:13px;padding:20px 0">Aún no has guardado ninguna propiedad. Toca el ❤ en una propiedad para guardarla aquí.</p>';
   animatePriceCounters();
   OM('mfavs');
