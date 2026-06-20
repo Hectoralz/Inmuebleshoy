@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-14t -->
+<html lang="es"><!-- build:2026-06-14u -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -88,8 +88,10 @@ section{padding:52px 20px}
 .pbadge{position:absolute;top:10px;left:10px;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:50px;z-index:1}
 .pbadge.v{background:var(--gr)}.pbadge.r{background:var(--dark)}.pbadge.d{background:#e67e22}
 .pfav{position:absolute;top:8px;right:8px;background:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:.2s;z-index:2}
-.pfav:hover,.pfav.on{background:var(--gr)}
-.pfav.on svg,.pfav:hover svg{stroke:#fff;fill:#fff}
+.pfav:hover{background:#fdecea}
+.pfav:hover svg{stroke:#e74c3c;fill:none}
+.pfav.on{background:var(--gr)}
+.pfav.on svg{stroke:#fff;fill:#fff}
 .pfav svg{width:16px;height:16px;stroke:var(--g600);fill:none;transition:.2s}
 @keyframes favPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 .pfav.pop{animation:favPop .35s ease}
@@ -1498,7 +1500,19 @@ function sendContact() {
   var phone = _agWaPhone || '5214921412672';
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(lines), '_blank');
   CM('magent');
-  showContactSuccess(name, _agWaName);
+  // Show success animation when the user comes back to this tab
+  var _waClientName = name, _waAgentName = _agWaName;
+  var _shown = false;
+  function onReturn() {
+    if (document.visibilityState === 'visible' && !_shown) {
+      _shown = true;
+      showContactSuccess(_waClientName, _waAgentName);
+      document.removeEventListener('visibilitychange', onReturn);
+      window.removeEventListener('focus', onReturn);
+    }
+  }
+  document.addEventListener('visibilitychange', onReturn);
+  window.addEventListener('focus', onReturn);
 }
 function showContactSuccess(clientName, agentName) {
   var d = document.createElement('div');
