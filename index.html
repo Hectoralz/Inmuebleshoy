@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-15c -->
+<html lang="es"><!-- build:2026-06-15d -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -323,6 +323,7 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
       <a href="#rentar" onclick="goTo('rentar');return false">Rentar</a>
       <a href="#agentes" onclick="goTo('agentes');return false">Agentes</a>
       <a href="#" onclick="openFavs();return false">❤ Favoritos</a>
+      <a href="#" onclick="openMapView();return false">🗺️ Ver mapa</a>
     </div>
     <div class="nr">
       <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.2s">🌙</button>
@@ -621,6 +622,30 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
 </div>
 
 <!-- BUSCAR -->
+<!-- MAPA SPLIT VIEW -->
+<div id="map-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--bg);flex-direction:column">
+  <!-- Header -->
+  <div style="background:var(--dark);padding:0 20px;height:56px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <button onclick="closeMapView()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+    <span style="color:#fff;font-weight:700;font-size:15px">🗺️ Mapa de propiedades</span>
+    <span id="map-overlay-count" style="color:rgba(255,255,255,.55);font-size:13px"></span>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <select id="map-filter-type" onchange="filterMapOverlay()" style="font-size:12px;padding:5px 10px;border-radius:8px;border:none;background:rgba(255,255,255,.15);color:#fff">
+        <option value="">Todas</option>
+        <option value="venta">En venta</option>
+        <option value="renta">En renta</option>
+      </select>
+    </div>
+  </div>
+  <!-- Split body -->
+  <div style="display:flex;flex:1;overflow:hidden">
+    <!-- Left: property list -->
+    <div id="map-prop-list" style="width:380px;flex-shrink:0;overflow-y:auto;border-right:1px solid var(--g200);padding:12px;display:flex;flex-direction:column;gap:10px"></div>
+    <!-- Right: map -->
+    <div id="map-overlay-map" style="flex:1;position:relative"></div>
+  </div>
+</div>
+
 <!-- FAVORITOS -->
 <div id="mfavs" class="moverlay" onclick="overlayClick(event,'mfavs')">
   <div class="mbox lg">
@@ -636,11 +661,6 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
     <button class="mclose" onclick="CM('msearch')">×</button>
     <h2 id="ms-title" style="font-size:18px;font-weight:700;margin-bottom:4px">Resultados</h2>
     <p id="ms-sub" style="font-size:13px;color:var(--g600);margin-bottom:12px"></p>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-      <button id="ms-view-toggle" onclick="toggleMapView()" style="font-size:12px;padding:6px 14px;border:1px solid var(--g200);border-radius:50px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:6px">
-        🗺️ Ver en mapa
-      </button>
-    </div>
     <!-- Filtros avanzados -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px;padding:12px;background:var(--g50);border-radius:10px">
       <div>
@@ -679,7 +699,6 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
       </div>
     </div>
     <div class="pgrid" id="ms-results" style="gap:14px"></div>
-    <div id="ms-map" style="display:none"></div>
   </div>
 </div>
 
@@ -1415,6 +1434,103 @@ function openPropDetail(id) {
 // ── FAVORITES ──
 let _mapViewOn = false;
 let _leafletMap = null;
+
+let _overlayMap = null, _overlayMarkers = [], _overlayProps = [];
+function openMapView() {
+  const el = document.getElementById('map-overlay');
+  el.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  _overlayProps = (allProps || []).filter(p => !isArchived(p));
+  renderMapOverlay(_overlayProps);
+}
+function closeMapView() {
+  document.getElementById('map-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function filterMapOverlay() {
+  const type = document.getElementById('map-filter-type').value;
+  const filtered = type ? _overlayProps.filter(p => p.type === type) : _overlayProps;
+  renderMapOverlay(filtered);
+}
+function renderMapPropCard(p) {
+  const photo = p.photos && p.photos[0] ? p.photos[0] : '';
+  const hasCoords = p.lat && p.lng;
+  return '<div onclick="openPropDetail(\'' + escAttr(p.id) + '\')" style="cursor:pointer;background:var(--card-bg);border:1.5px solid ' + (hasCoords ? 'var(--g200)' : 'var(--g100)') + ';border-radius:10px;display:flex;gap:10px;padding:10px;transition:.15s" onmouseover="highlightMapMarker(\'' + escAttr(p.id) + '\',true)" onmouseout="highlightMapMarker(\'' + escAttr(p.id) + '\',false)">'
+    + (photo ? '<img src="' + photo + '" style="width:72px;height:72px;object-fit:cover;border-radius:7px;flex-shrink:0">' : '<div style="width:72px;height:72px;background:var(--g100);border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px">🏠</div>')
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-weight:700;font-size:13px;color:var(--gr)">' + escHtml(fmtPrice(p.price)) + '</div>'
+    + '<div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0">' + escHtml((p.title||'').substring(0,45)) + '</div>'
+    + '<div style="font-size:11px;color:var(--g600)">📍 ' + escHtml(p.city||'') + (p.zone ? ' · ' + escHtml(p.zone) : '') + '</div>'
+    + (!hasCoords ? '<div style="font-size:10px;color:var(--g400);margin-top:3px">Sin ubicación en mapa</div>' : '')
+    + '</div></div>';
+}
+function highlightMapMarker(id, on) {
+  const marker = _overlayMarkers.find(m => m._propId === id);
+  if (!marker) return;
+  const el = marker.getElement ? marker.getElement() : null;
+  if (el) el.style.transform = on ? 'scale(1.5)' : 'scale(1)';
+}
+function renderMapOverlay(props) {
+  const listEl = document.getElementById('map-prop-list');
+  const mapEl = document.getElementById('map-overlay-map');
+  const countEl = document.getElementById('map-overlay-count');
+  if (!listEl || !mapEl) return;
+  const withCoords = props.filter(p => p.lat && p.lng);
+  countEl.textContent = props.length + ' propiedades · ' + withCoords.length + ' en mapa';
+  // Render list
+  listEl.innerHTML = props.length
+    ? props.map(renderMapPropCard).join('')
+    : '<p style="color:var(--g400);font-size:13px;padding:20px">Sin propiedades</p>';
+  // Init/update map
+  function buildOverlayMap() {
+    if (_overlayMap) { _overlayMap.remove(); _overlayMap = null; }
+    _overlayMarkers = [];
+    const map = L.map(mapEl).setView([22.7709, -102.5832], 12);
+    _overlayMap = map;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19
+    }).addTo(map);
+    withCoords.forEach(p => {
+      const icon = L.divIcon({
+        className: '',
+        html: '<div style="background:#2ecc71;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .15s">' + escHtml(fmtPrice(p.price)) + '</div>',
+        iconSize: [null, null], iconAnchor: [0, 0]
+      });
+      const marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)], { icon }).addTo(map);
+      marker._propId = p.id;
+      _overlayMarkers.push(marker);
+      // Hover popup
+      const photo = p.photos && p.photos[0] ? p.photos[0] : '';
+      const popupHtml = '<div style="width:200px;cursor:pointer">'
+        + (photo ? '<img src="' + photo + '" style="width:100%;height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block">' : '')
+        + '<div style="padding:8px 10px">'
+        + '<div style="font-weight:700;font-size:13px;color:#1AAF5F">' + escHtml(fmtPrice(p.price)) + '</div>'
+        + '<div style="font-size:12px;color:#2c3e50;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml((p.title||'').substring(0,40)) + '</div>'
+        + '<div style="font-size:11px;color:#9aa0a6;margin-top:2px">📍 ' + escHtml(p.city||'') + '</div>'
+        + '</div></div>';
+      const popup = L.popup({ closeButton: false, offset: [0, -4], maxWidth: 220 }).setContent(popupHtml);
+      marker.bindPopup(popup);
+      marker.on('mouseover', function() { this.openPopup(); });
+      marker.on('click', function() { closeMapView(); setTimeout(function(){ openPropDetail(p.id); }, 50); });
+    });
+    if (withCoords.length > 1) {
+      map.fitBounds(L.latLngBounds(withCoords.map(p => [parseFloat(p.lat), parseFloat(p.lng)])), { padding: [40, 40] });
+    }
+    setTimeout(() => map.invalidateSize(), 200);
+  }
+  if (typeof L !== 'undefined') {
+    buildOverlayMap();
+  } else {
+    const css = document.createElement('link'); css.rel = 'stylesheet';
+    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(css);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = buildOverlayMap;
+    document.head.appendChild(script);
+  }
+}
+
 
 let _pickerMap = null, _pickerMarker = null;
 function initPickerMap(lat, lng) {
