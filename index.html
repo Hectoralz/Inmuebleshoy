@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><!-- build:2026-06-15b -->
+<html lang="es"><!-- build:2026-06-15c -->
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -503,6 +503,13 @@ footer{background:#1a2530;color:rgba(255,255,255,.68);padding:52px 20px 0}
           <div class="fg"><label>Colonia / Fraccionamiento</label><input type="text" id="pf-zone" placeholder="Ej: Fraccionamiento Las Quintas"></div>
         </div>
         <div class="fg"><label>Dirección completa (para mapa)</label><input type="text" id="pf-address" placeholder="Ej: Calle Roble 123, Las Quintas, Guadalupe, Zac."></div>
+        <div class="fg">
+          <label>📍 Ubicación en el mapa <span style="font-weight:400;color:var(--g400);font-size:11px">— Arrastra el pin para marcar exactamente dónde está</span></label>
+          <div id="pf-map-picker" style="height:240px;border-radius:10px;border:1.5px solid var(--g200);overflow:hidden;margin-top:4px"></div>
+          <input type="hidden" id="pf-lat" value="">
+          <input type="hidden" id="pf-lng" value="">
+          <p id="pf-coords-hint" style="font-size:11px;color:var(--g400);margin-top:4px">Sin ubicación marcada — mueve el pin para guardarla</p>
+        </div>
         <div class="fg"><label>Descripción</label><textarea id="pf-desc" placeholder="Descripción detallada de la propiedad…"></textarea></div>
 
         <!-- FOTOS -->
@@ -1407,6 +1414,52 @@ function openPropDetail(id) {
 
 // ── FAVORITES ──
 let _mapViewOn = false;
+let _leafletMap = null;
+
+let _pickerMap = null, _pickerMarker = null;
+function initPickerMap(lat, lng) {
+  const el = document.getElementById('pf-map-picker');
+  if (!el) return;
+  const initLat = lat || 22.7709, initLng = lng || -102.5832;
+  function buildMap() {
+    if (_pickerMap) { _pickerMap.remove(); _pickerMap = null; }
+    const map = L.map(el, { zoomControl: true }).setView([initLat, initLng], lat ? 15 : 12);
+    _pickerMap = map;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19
+    }).addTo(map);
+    const icon = L.divIcon({
+      className: '',
+      html: '<div style="background:#2ecc71;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);cursor:grab"></div>',
+      iconSize: [22, 22], iconAnchor: [11, 11]
+    });
+    const marker = L.marker([initLat, initLng], { icon, draggable: true }).addTo(map);
+    _pickerMarker = marker;
+    function updateCoords(latlng) {
+      document.getElementById('pf-lat').value = latlng.lat.toFixed(6);
+      document.getElementById('pf-lng').value = latlng.lng.toFixed(6);
+      document.getElementById('pf-coords-hint').textContent = '📍 ' + latlng.lat.toFixed(5) + ', ' + latlng.lng.toFixed(5);
+      document.getElementById('pf-coords-hint').style.color = 'var(--gr)';
+    }
+    if (lat) updateCoords({ lat: initLat, lng: initLng });
+    marker.on('dragend', function(e) { updateCoords(e.target.getLatLng()); });
+    map.on('click', function(e) { marker.setLatLng(e.latlng); updateCoords(e.latlng); });
+    setTimeout(() => map.invalidateSize(), 200);
+  }
+  if (typeof L !== 'undefined') {
+    buildMap();
+  } else {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(css);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = buildMap;
+    document.head.appendChild(script);
+  }
+}
+
 function toggleMapView() {
   _mapViewOn = !_mapViewOn;
   const btn = document.getElementById('ms-view-toggle');
@@ -1425,35 +1478,69 @@ function toggleMapView() {
 }
 function renderMapView(props) {
   const mapEl = document.getElementById('ms-map');
-  if (!props.length) {
-    mapEl.innerHTML = '<p style="color:var(--g400);font-size:13px;padding:20px 0">No hay propiedades para mostrar en el mapa.</p>';
+  const withCoords = props.filter(p => p.lat && p.lng);
+  if (!withCoords.length) {
+    mapEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--g400)"><p style="font-size:32px;margin-bottom:8px">📍</p><p style="font-size:14px;font-weight:600;color:var(--txt)">Sin ubicaciones en el mapa aún</p><p style="font-size:13px;margin-top:4px">Las propiedades aparecerán aquí cuando los agentes marquen su ubicación al publicarlas.</p></div>';
     return;
   }
-  // Group by zone/city for a cleaner overview
-  const groups = {};
-  props.forEach(p => {
-    const key = (p.zone || p.city || 'Otra zona').trim();
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(p);
-  });
-  const zones = Object.keys(groups).sort((a,b) => groups[b].length - groups[a].length);
-  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
-  zones.forEach(zone => {
-    const list = groups[zone];
-    const q = encodeURIComponent(zone + ' Zacatecas Mexico');
-    html += '<div style="border:1px solid var(--g200);border-radius:12px;overflow:hidden">'
-      + '<iframe src="https://maps.google.com/maps?q=' + q + '&output=embed&z=14" width="100%" height="180" style="border:0;display:block" loading="lazy"></iframe>'
-      + '<div style="padding:10px 14px">'
-      + '<strong style="font-size:13px">' + escHtml(zone) + '</strong> <span style="color:var(--g600);font-size:12px">(' + list.length + ' ' + (list.length===1?'propiedad':'propiedades') + ')</span>'
-      + '<div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">'
-      + list.slice(0,4).map(p => '<a href="#" onclick="toggleMapView();openPropDetail(\'' + escAttr(p.id) + '\');return false" style="font-size:12px;color:var(--gr);text-decoration:none">→ ' + escHtml((p.title||'').substring(0,45)) + ' · ' + escHtml(fmtPrice(p.price)) + '</a>').join('')
-      + (list.length > 4 ? '<span style="font-size:11px;color:var(--g400)">+' + (list.length-4) + ' más en esta zona</span>' : '')
-      + '</div></div></div>';
-  });
-  html += '</div>';
-  mapEl.innerHTML = html;
+  mapEl.style.height = '520px';
+  mapEl.style.borderRadius = '12px';
+  mapEl.style.overflow = 'hidden';
+  mapEl.innerHTML = '';
+  // Load Leaflet if not loaded
+  function initLeafletMap() {
+    if (_leafletMap) { _leafletMap.remove(); _leafletMap = null; }
+    const map = L.map(mapEl).setView([22.7709, -102.5832], 12);
+    _leafletMap = map;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19
+    }).addTo(map);
+    // Custom green pin icon
+    const icon = L.divIcon({
+      className: '',
+      html: '<div style="background:var(--gr);width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+    withCoords.forEach(p => {
+      const photo = (p.photos && p.photos[0]) ? p.photos[0] : '';
+      const price = fmtPrice(p.price);
+      const marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)], { icon }).addTo(map);
+      // Hover popup
+      const popupHtml = '<div data-pid="' + p.id + '" class="map-prop-popup" style="cursor:pointer;width:200px">' +
+        (photo ? '<img src="' + photo + '" style="width:100%;height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block">' : '') +
+        '<div style="padding:8px 10px">' +
+        '<div style="font-weight:700;font-size:13px;color:#1AAF5F;margin-bottom:2px">' + price + '</div>' +
+        '<div style="font-size:12px;color:#2c3e50;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (p.title||'').substring(0,40) + '</div>' +
+        '<div style="font-size:11px;color:#9aa0a6;margin-top:2px">📍 ' + (p.city||'') + '</div>' +
+        '</div></div>';
+      const popup = L.popup({ closeButton: false, offset: [0, -8], maxWidth: 220 }).setContent(popupHtml);
+      marker.on('mouseover', function() { this.openPopup(); });
+      marker.on('click', function() { CM('msearch'); setTimeout(function(){ openPropDetail(p.id); }, 50); });
+      marker.bindPopup(popup);
+    });
+    // Fit map to all pins
+    if (withCoords.length > 1) {
+      const bounds = L.latLngBounds(withCoords.map(p => [parseFloat(p.lat), parseFloat(p.lng)]));
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+  if (typeof L !== 'undefined') {
+    initLeafletMap();
+  } else {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(css);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = initLeafletMap;
+    document.head.appendChild(script);
+  }
 }
-let _lastSearchResults = [];
+
 function applyFilters() {
   const beds = parseInt(document.getElementById('f-beds').value) || 0;
   const baths = parseInt(document.getElementById('f-baths').value) || 0;
@@ -1817,6 +1904,7 @@ function showAT(id, btn) {
     }
     var wasEditing = window._editingViaButton;
     window._editingViaButton = false;
+    setTimeout(initPickerMap, 150); // init map after DOM is visible
     var fgAgent = document.getElementById('fg-agent');
     var agSelEl = document.getElementById('pf-agent');
     if (fgAgent) fgAgent.style.display = '';
@@ -2006,6 +2094,8 @@ function editProp(id) {
     document.getElementById('pf-zone').value = p.zone || '';
     document.getElementById('pf-address').value = p.address || '';
     document.getElementById('pf-desc').value = p.desc || '';
+    // Load coordinates into picker map
+    setTimeout(function() { initPickerMap(p.lat ? parseFloat(p.lat) : null, p.lng ? parseFloat(p.lng) : null); }, 200);
     // Pre-fill agent selector (admin only, hidden for agents)
     if (currentRole === 'admin') {
       var fgAgent = document.getElementById('fg-agent');
@@ -2156,6 +2246,8 @@ async function saveProp() {
       title, price, city,
       zone: document.getElementById('pf-zone').value.trim(),
       address: document.getElementById('pf-address').value.trim(),
+      lat: document.getElementById('pf-lat').value || null,
+      lng: document.getElementById('pf-lng').value || null,
       type: document.getElementById('pf-type').value,
       cat:  document.getElementById('pf-cat').value,
       currency: document.getElementById('pf-cur').value,
